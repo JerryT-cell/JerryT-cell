@@ -1,0 +1,36 @@
+{
+  "$defs": {
+    "monster": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "main.schema#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "hunger": {
+          "type": "number",
+          "minimum": 0
+        },
+        "damage": {
+          "type": "number",
+          "minimum": 0
+        },
+        "evilness": {
+          "type": "number",
+          "minimum": 0
+        },
+        "attackStrategy": {
+          "enum": ["MULTI","TARGETED","BASIC"]
+        }
+      },
+      "required": [
+        "id",
+        "damage",
+        "attackStrategy"
+      ],
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "$defs": {
+    "trap": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "main.schema#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "attackStrategy": {
+          "enum": ["MULTI","TARGETED","BASIC"]
+        },
+        "damage": {
+          "type": "number",
+          "minimum": 1
+        },
+        "target": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 3
+        }
+      },
+      "required": [
+        "id",
+        "attackStrategy",
+        "damage"
+      ],
+      "type": "object"
+    }
+  }
+}

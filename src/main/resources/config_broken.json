@@ -1,0 +1,49 @@
+{
+  "maxPlayers": 3,
+  "years": 2,
+  "dungeonSideLength": 5,
+  "initialFood": 3,
+  "initialGold": 3,
+  "initialImps": 3,
+  "monsters": [
+    {
+      "id": 10,
+      "name": "Ghost",
+      "damage": 3,
+      "attackStrategy": "BASIC"
+    }
+  ],
+  "adventurers": [
+    {
+      "id": 20,
+      "name": "Thief",
+      "difficulty": 1,
+      "healthPoints": 3
+    }
+  ],
+  "traps": [
+    {
+      "id": 30,
+      "name": "Pendulum",
+      "attackStrategy": "MULTI",
+      "damage": 4,
+      "target": 2
+    }
+  ],
+  "rooms": [
+    {
+      "id": 30,
+      "name": "Mine",
+      "activation": 3,
+      "restriction": "UPPER_HALF"
+    }
+  ],
+  "spells": [
+    {
+      "id": 0,
+      "spellType": "RESOURCE",
+      "bidType": "FOOD",
+      "slot": 2
+    }
+  ]
+}

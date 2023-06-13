@@ -1,0 +1,41 @@
+.idea/
+.gradle/
+
+build/
+out/
+gradle/
+docs/
+libs/
+
+gradlew
+gradlew.bat
+
+
+##############################
+## Eclipse
+##############################
+.settings/
+bin/
+tmp/
+.metadata
+.classpath
+.project
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.loadpath
+.factorypath
+
+
+##############################
+## Visual Studio Code
+##############################
+.vscode/
+.code-workspace
+
+##############################
+## OS X
+##############################
+.DS_Store
