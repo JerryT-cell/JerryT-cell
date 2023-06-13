@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DigTunnelCommand.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.commands</a> &gt; <span class="el_source">DigTunnelCommand.java</span></div><h1>DigTunnelCommand.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.commands;
+
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.model.dungeon.Coordinate;
+import de.unisaarland.cs.se.selab.model.dungeon.Coordinate.Direction;
+import de.unisaarland.cs.se.selab.model.dungeon.Dungeon;
+import de.unisaarland.cs.se.selab.model.dungeon.Tunnel;
+import de.unisaarland.cs.se.selab.model.dungeon.TunnelGraph;
+import de.unisaarland.cs.se.selab.state.BuildingState;
+import de.unisaarland.cs.se.selab.state.State;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+
+/**
+ * The player digs a tunnel.
+ */
+public class DigTunnelCommand extends PlayerCommand {
+
+    private static final int MINER = 1;
+    private static final int MINER_AND_SUPERVISOR = 2;
+    private final Coordinate coordinate;
+
+    public DigTunnelCommand(final int playerId, final int x, final int y) {
+<span class="nc" id="L27">        super(playerId);</span>
+<span class="nc" id="L28">        this.coordinate = new Coordinate(x, y);</span>
+<span class="nc" id="L29">    }</span>
+
+    @Override
+    public Set&lt;State.Phase&gt; inPhase() {
+<span class="nc" id="L33">        return Set.of(State.Phase.PLACING_TUNNEL);</span>
+    }
+
+    @Override
+    public ActionResult run(final Model model, final ConnectionWrapper connection) {
+<span class="nc" id="L38">        final Player player = model.getPlayerById(getId());</span>
+
+<span class="nc bnc" id="L40" title="All 2 branches missed.">        if (player.getNumTunnelDigsAllowed() &lt;= 0) {</span>
+<span class="nc" id="L41">            connection.sendActionFailed(getId(), &quot;You have no tunnels left to place.&quot;);</span>
+<span class="nc" id="L42">            return ActionResult.RETRY;</span>
+        }
+
+<span class="nc" id="L45">        final Dungeon dungeon = player.getDungeon();</span>
+<span class="nc" id="L46">        final TunnelGraph graph = dungeon.getGraph();</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">        if (DigTunnelCommand.violatesTunnelBuildingRestrictions(</span>
+                this.coordinate,
+                graph,
+<span class="nc bnc" id="L50" title="All 2 branches missed.">                model.getDungeonSideLength()) || !isConnected(this.coordinate, graph)) {</span>
+<span class="nc" id="L51">            connection.sendActionFailed(getId(), &quot;You cannot place your tunnel here.&quot;);</span>
+<span class="nc" id="L52">            return ActionResult.RETRY;</span>
+        }
+
+<span class="nc" id="L55">        final int currentMiners = (int) graph.stream().filter(Tunnel::hasTunnelMiningImp).count();</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        final boolean needSupervisor = currentMiners == BuildingState.NO_SUPERVISION_LIMIT;</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        final int neededImps = needSupervisor ? MINER_AND_SUPERVISOR : MINER;</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">        if (player.getImps() &lt; neededImps) {</span>
+<span class="nc" id="L59">            connection.sendActionFailed(getId(), &quot;You do not have enough imps for that left.&quot;);</span>
+<span class="nc" id="L60">            return ActionResult.RETRY;</span>
+        }
+
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        if (needSupervisor) {</span>
+<span class="nc" id="L64">            dungeon.addSupervision();</span>
+        }
+<span class="nc" id="L66">        player.changeImps(-neededImps);</span>
+<span class="nc" id="L67">        connection.sendImpsChanged(getId(), -neededImps);</span>
+<span class="nc" id="L68">        player.digTunnel();</span>
+<span class="nc" id="L69">        final Tunnel newTunnel = new Tunnel(this.coordinate, true);</span>
+<span class="nc" id="L70">        graph.addTunnel(newTunnel);</span>
+<span class="nc" id="L71">        connection.sendTunnelDug(getId(), this.coordinate);</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        if (findCounterSpell(model, newTunnel)) {</span>
+<span class="nc" id="L73">            connection.sendCounterSpellFound(player.getId());</span>
+<span class="nc" id="L74">            player.increaseCounterSpell();</span>
+        }
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (player.getNumTunnelDigsAllowed() &lt;= 0) {</span>
+<span class="nc" id="L77">            return ActionResult.PROCEED;</span>
+        } else {
+<span class="nc" id="L79">            return ActionResult.RETRY;</span>
+        }
+    }
+
+    /**
+     * Check whether the given coordinate is connected to a tunnel graph.
+     *
+     * @param coordinate the coordinate to check
+     * @param graph      the graph where the coordinate shall be added
+     * @return whether the coordinate is connected to the graph
+     */
+    public static boolean isConnected(final Coordinate coordinate, final TunnelGraph graph) {
+<span class="nc" id="L91">        final List&lt;Tunnel&gt; neighbours = graph.getNeighbours(coordinate);</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        return !neighbours.isEmpty();</span>
+    }
+
+    /**
+     * Checks whether the given coordinate violates any tunnel digging restrictions.
+     * &lt;p&gt;
+     * This function checks for the following restrictions:
+     * - the coordinate must be in bounds
+     * - the coordinate must not form any 2-by-2s
+     * - the coordinate must not already be a tunnel
+     * &lt;/p&gt;
+     *
+     * @param coordinate the coordinate to check
+     * @param graph      the graph where the coordinate shall be added
+     * @param sideLength the graph's side length
+     * @return whether the coordinate violates any building restrictions
+     */
+    public static boolean violatesTunnelBuildingRestrictions(final Coordinate coordinate,
+                                                             final TunnelGraph graph,
+                                                             final int sideLength) {
+        // Check out of bounds
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if (coordinate.posX() &gt; sideLength - 1</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">                || coordinate.posY() &gt; sideLength - 1</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">                || coordinate.posX() &lt; 0</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">                || coordinate.posY() &lt; 0) {</span>
+<span class="nc" id="L117">            return true;</span>
+        }
+
+        // Check 2-by-2s
+        // The vectors are movement directions applied successively to the coordinate,
+        // e.g., the first vector checks the following coordinates the following (starting at 'X'):
+        //    1 --&gt; 2
+        //    ^     |
+        //    |     v
+        //    X     3
+<span class="nc" id="L127">        final Direction[] nwVector = {Direction.NORTH, Direction.WEST, Direction.SOUTH};</span>
+<span class="nc" id="L128">        final Direction[] neVector = {Direction.NORTH, Direction.EAST, Direction.SOUTH};</span>
+<span class="nc" id="L129">        final Direction[] swVector = {Direction.SOUTH, Direction.WEST, Direction.NORTH};</span>
+<span class="nc" id="L130">        final Direction[] seVector = {Direction.SOUTH, Direction.EAST, Direction.NORTH};</span>
+
+        // Check if all neighbours in these direction are present, if yes then we have a two by two
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        for (final Direction[] vector : List.of(nwVector, neVector, swVector, seVector)) {</span>
+<span class="nc" id="L134">            if (graph.getTunnel(coordinate.getNeighbor(vector[0]))</span>
+<span class="nc" id="L135">                    .flatMap(t1 -&gt; graph.getTunnel(t1.getCoordinate().getNeighbor(vector[1])))</span>
+<span class="nc" id="L136">                    .flatMap(t2 -&gt; graph.getTunnel(t2.getCoordinate().getNeighbor(vector[2])))</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">                    .isPresent()) {</span>
+<span class="nc" id="L138">                return true;</span>
+            }
+<span class="nc" id="L140">        }</span>
+
+        // Check if already a tunnel
+<span class="nc" id="L143">        return graph.getTunnel(coordinate).isPresent();</span>
+    }
+
+    /**
+     * to calculate the probability of finding a counter spell
+     *
+     * @param model  the model to use
+     * @param tunnel the tunnel that has been dug
+     * @return true if a counterSpell has been found
+     */
+    private boolean findCounterSpell(final Model model, final Tunnel tunnel) {
+
+<span class="nc" id="L155">        final Random random = model.getRandomObject();</span>
+<span class="nc" id="L156">        final int sideLength = model.getDungeonSideLength();</span>
+<span class="nc" id="L157">        final int x = tunnel.getCoordinate().posX();</span>
+<span class="nc" id="L158">        final int y = tunnel.getCoordinate().posY();</span>
+<span class="nc" id="L159">        final int dieThrew = random.nextInt(sideLength * sideLength);</span>
+
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        return dieThrew &lt; x * y;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

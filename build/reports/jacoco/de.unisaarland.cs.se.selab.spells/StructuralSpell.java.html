@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StructuralSpell.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.spells</a> &gt; <span class="el_source">StructuralSpell.java</span></div><h1>StructuralSpell.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.spells;
+
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.comm.BidType;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.model.dungeon.Dungeon;
+import de.unisaarland.cs.se.selab.model.dungeon.Room;
+import de.unisaarland.cs.se.selab.model.dungeon.Tunnel;
+import java.util.Optional;
+
+<span class="pc bpc" id="L12" title="1 of 2 branches missed.">public class StructuralSpell extends Spell {</span>
+    private final StructureEffect structureEffect;
+
+    public StructuralSpell(final int id, final SpellType spellType,
+                           final BidType bidType, final int slot,
+                           final StructureEffect structureEffect) {
+<span class="fc" id="L18">        super(id, spellType, bidType, slot);</span>
+<span class="fc" id="L19">        this.structureEffect = structureEffect;</span>
+<span class="fc" id="L20">        this.magicPointsNeeded = 5;</span>
+<span class="fc" id="L21">    }</span>
+
+    /**
+     * @param player  the player It is going to affect
+     * @param model   the model, on which changes are based.
+     * @param wrapper the wrapper, for sending events
+     */
+
+    @Override
+    protected void cast(final Player player, final Model model,
+                        final ConnectionWrapper wrapper) {
+<span class="nc" id="L32">        final Dungeon dungeon = player.getDungeon();</span>
+<span class="nc" id="L33">        final Optional&lt;Tunnel&gt; battleGroundOptional = dungeon.getBattleGround();</span>
+
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        if (battleGroundOptional.isEmpty()) {</span>
+<span class="nc" id="L36">            return;</span>
+        }
+<span class="nc" id="L38">        final Tunnel battleGround = battleGroundOptional.get();</span>
+        // destroy or conquer
+<span class="nc bnc" id="L40" title="All 2 branches missed.">        if (structureEffect == StructureEffect.DESTROY) {</span>
+<span class="nc" id="L41">            final Optional&lt;Tunnel&gt; tunnelRoom =</span>
+<span class="nc" id="L42">                    dungeon.getGraph().closestRoomToAdventurer(battleGround);</span>
+<span class="nc" id="L43">            tunnelRoom.ifPresent(</span>
+<span class="nc" id="L44">                    tunnel -&gt; destroyRoom(player.getId(), tunnel, battleGround, wrapper));</span>
+
+<span class="nc" id="L46">        } else {</span>
+            //conquer
+<span class="nc" id="L48">            dungeon.conquer();</span>
+
+        }
+
+
+<span class="nc" id="L53">    }</span>
+
+    /**
+     * destroy the room and if it is the current battleGround,
+     * removes a monster
+     *
+     * @param playerId     player fighting
+     * @param tunnel       the tunnel having the closest room to the adventurers
+     * @param battleGround the current battleGround
+     * @param wrapper      the connection wrapper
+     */
+    private void destroyRoom(final int playerId, final Tunnel tunnel,
+                             final Tunnel battleGround, final ConnectionWrapper wrapper) {
+
+
+<span class="nc bnc" id="L68" title="All 4 branches missed.">        assert tunnel.getRoom().isPresent();</span>
+<span class="nc" id="L69">        final Room room = tunnel.getRoom().get();</span>
+        //destroy room
+<span class="nc" id="L71">        tunnel.setRoom(null);</span>
+<span class="nc" id="L72">        wrapper.sendRoomRemoved(playerId, room.getId());</span>
+
+        //if room is currentBattleground remove monster
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        if (battleGround.getCoordinate().posX() == tunnel.getCoordinate().posX()</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">                &amp;&amp; battleGround.getCoordinate().posY() == tunnel.getCoordinate().posY()) {</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">            if (tunnel.getMonsters().size() == 2) {</span>
+<span class="nc" id="L78">                tunnel.getMonsters().remove(0);</span>
+            }
+        }
+<span class="nc" id="L81">    }</span>
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

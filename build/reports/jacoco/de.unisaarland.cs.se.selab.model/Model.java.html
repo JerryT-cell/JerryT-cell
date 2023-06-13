@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Model.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.model</a> &gt; <span class="el_source">Model.java</span></div><h1>Model.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.model;
+
+import de.unisaarland.cs.se.selab.comm.BidType;
+import de.unisaarland.cs.se.selab.model.dungeon.Dungeon;
+import de.unisaarland.cs.se.selab.model.dungeon.Room;
+import de.unisaarland.cs.se.selab.spells.Spell;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+
+/**
+ * The main game model class containing all relevant information about the game.
+ */
+public class Model {
+
+    public static final int BID_LIMIT = 3;
+    public static final int MAX_ROUNDS = 4;
+    private static final int MIN_PLAYER_ID = 0;
+
+    private final Map&lt;Integer, Player&gt; players;
+    private final List&lt;Monster&gt; monsters;
+    private final List&lt;Adventurer&gt; adventurers;
+    private final List&lt;Trap&gt; traps;
+    private final List&lt;Room&gt; rooms;
+    private final Set&lt;Integer&gt; activeIds;
+    private final Random random;
+    private final List&lt;Monster&gt; availableMonsters;
+    private final List&lt;Room&gt; availableRooms;
+    private final List&lt;Adventurer&gt; queueingAdventurers;
+    private final int maxPlayers;
+    private final int maxYear;
+    private final int dungeonSideLength;
+    private final int initialFood;
+    private final int initialGold;
+    private final int initialImps;
+    private final int initialEvilness;
+    private int currentMaxId;
+    private int round;
+    private int year;
+    private int startingPlayer;
+    private final List&lt;Spell&gt; spells;
+    private final List&lt;Spell&gt; availableSpells;
+
+
+    public Model(final Collection&lt;Monster&gt; monsters,
+                 final Collection&lt;Adventurer&gt; adventurers,
+                 final Collection&lt;Trap&gt; traps,
+                 final Collection&lt;Room&gt; rooms,
+                 final long randomSeed,
+                 final int maxPlayers,
+                 final int maxYear,
+                 final int dungeonSideLength,
+                 final int initialFood,
+                 final int initialGold,
+                 final int initialImps,
+                 final int initialEvilness,
+<span class="fc" id="L65">                 final Collection&lt;Spell&gt; spells) {</span>
+<span class="fc" id="L66">        this.monsters = new ArrayList&lt;&gt;(monsters);</span>
+<span class="fc" id="L67">        this.adventurers = new ArrayList&lt;&gt;(adventurers);</span>
+<span class="fc" id="L68">        this.traps = new ArrayList&lt;&gt;(traps);</span>
+<span class="fc" id="L69">        this.rooms = new ArrayList&lt;&gt;(rooms);</span>
+<span class="fc" id="L70">        this.players = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L71">        this.activeIds = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L72">        this.availableMonsters = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L73">        this.availableRooms = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L74">        this.queueingAdventurers = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L75">        this.random = new Random(randomSeed);</span>
+<span class="fc" id="L76">        this.maxPlayers = maxPlayers;</span>
+<span class="fc" id="L77">        this.round = 0;</span>
+<span class="fc" id="L78">        this.year = 1;</span>
+<span class="fc" id="L79">        this.startingPlayer = Model.MIN_PLAYER_ID;</span>
+<span class="fc" id="L80">        this.currentMaxId = Model.MIN_PLAYER_ID - 1;</span>
+<span class="fc" id="L81">        this.maxYear = maxYear;</span>
+<span class="fc" id="L82">        this.dungeonSideLength = dungeonSideLength;</span>
+<span class="fc" id="L83">        this.initialFood = initialFood;</span>
+<span class="fc" id="L84">        this.initialGold = initialGold;</span>
+<span class="fc" id="L85">        this.initialImps = initialImps;</span>
+<span class="fc" id="L86">        this.initialEvilness = initialEvilness;</span>
+<span class="fc" id="L87">        this.spells = new ArrayList&lt;&gt;(spells);</span>
+<span class="fc" id="L88">        this.availableSpells = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L89">    }</span>
+
+    /**
+     * Check whether the maximum number of players has been reached.
+     *
+     * @return whether the maximum number of players has been reached
+     */
+    public final boolean maxPlayersReached() {
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        return this.players.size() &gt;= this.maxPlayers;</span>
+    }
+
+    /**
+     * Check whether the current building phase or combat phase has a next round.
+     *
+     * @return whether the current building phase or combat phase has a next round
+     */
+    public final boolean hasNextRound() {
+<span class="nc bnc" id="L106" title="All 2 branches missed.">        if (this.round++ == MAX_ROUNDS) {</span>
+<span class="nc" id="L107">            this.round = 0;</span>
+<span class="nc" id="L108">            return false;</span>
+        }
+<span class="nc" id="L110">        return true;</span>
+    }
+
+    /**
+     * Get the number of the current season or combat round.
+     *
+     * @return the number of the current season or combat round
+     */
+    public final int getRound() {
+<span class="nc" id="L119">        return this.round;</span>
+    }
+
+    /**
+     * Check whether the game has a next year.
+     *
+     * @return whether the game has a next year
+     */
+    public final boolean hasNextYear() {
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        return this.year++ &lt; this.maxYear;</span>
+    }
+
+    /**
+     * Get the number of the current year.
+     *
+     * @return the number of the current year
+     */
+    public final int getYear() {
+<span class="nc" id="L137">        return this.year;</span>
+    }
+
+    private int nextId() {
+<span class="nc" id="L141">        return this.currentMaxId + 1;</span>
+    }
+
+    /**
+     * Advance the starting player marker to the next player.
+     */
+    public final void nextPlayer() {
+<span class="nc bnc" id="L148" title="All 2 branches missed.">        if (!this.activeIds.isEmpty()) {</span>
+            // Find next matching id.
+            do {
+<span class="nc" id="L151">                this.startingPlayer++;</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">                if (this.startingPlayer &gt; this.currentMaxId) {</span>
+<span class="nc" id="L153">                    this.startingPlayer = Model.MIN_PLAYER_ID;</span>
+                }
+<span class="nc bnc" id="L155" title="All 2 branches missed.">            } while (!this.activeIds.contains(this.startingPlayer));</span>
+        }
+<span class="nc" id="L157">    }</span>
+
+    /**
+     * Retrieve a player by his/her player  ID.
+     *
+     * @param playerId the player's player ID
+     * @return the player object
+     */
+    public final Player getPlayerById(final int playerId) {
+<span class="nc" id="L166">        return this.players.values().stream()</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">                .filter(player -&gt; player.getId() == playerId)</span>
+<span class="nc" id="L168">                .findFirst()</span>
+<span class="nc" id="L169">                .orElseThrow(() -&gt; {</span>
+<span class="nc" id="L170">                    throw new IllegalArgumentException(&quot;Invalid PlayerId.&quot;);</span>
+                });
+    }
+
+    /**
+     * Get a list of all alive players sorted by player ID.
+     *
+     * @return the sorted list of alive players
+     */
+    public final List&lt;Player&gt; getPlayers() {
+<span class="nc" id="L180">        final List&lt;Player&gt; players = new ArrayList&lt;&gt;(this.players.values());</span>
+<span class="nc" id="L181">        players.sort(Comparator.comparingInt(Player::getId));</span>
+<span class="nc" id="L182">        return new ArrayList&lt;&gt;(players</span>
+<span class="nc" id="L183">                .stream()</span>
+<span class="nc" id="L184">                .filter(Player::isAlive)</span>
+<span class="nc" id="L185">                .toList());</span>
+    }
+
+    /**
+     * Get a list of all players in running order starting with the current starting player.
+     *
+     * @return the list of players in running order
+     */
+    public final List&lt;Player&gt; getPlayersFromStarting() {
+<span class="nc" id="L194">        final List&lt;Player&gt; players = getPlayers();</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">        if (this.players.containsKey(this.startingPlayer)) {</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">            while (players.get(0).getId() != this.startingPlayer) {</span>
+<span class="nc" id="L197">                players.add(players.remove(0));</span>
+            }
+        }
+<span class="nc" id="L200">        return players;</span>
+    }
+
+    /**
+     * Get the monster with the given ID if currently available for employment.
+     *
+     * @param id the monster's ID
+     * @return the monster if available or {@code Optional.empty()} otherwise
+     */
+    public final Optional&lt;Monster&gt; getAvailableMonster(final int id) {
+<span class="nc" id="L210">        return this.availableMonsters.stream()</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">                .filter(monster -&gt; monster.getId() == id)</span>
+<span class="nc" id="L212">                .findFirst();</span>
+    }
+
+    /**
+     * Get the room with the given ID if currently available for construction.
+     *
+     * @param id the room's ID
+     * @return the room if available or {@code Optional.empty()} otherwise
+     */
+    public final Optional&lt;Room&gt; getAvailableRoom(final int id) {
+<span class="nc bnc" id="L222" title="All 2 branches missed.">        return this.availableRooms.stream().filter(room -&gt; room.getId() == id).findFirst();</span>
+    }
+
+    /**
+     * Check whether the player with the given ID is in the game.
+     *
+     * @param playerId the player's player ID
+     * @return whether the player is in the game
+     */
+    public final boolean hasPlayer(final int playerId) {
+<span class="nc" id="L232">        return this.players.containsKey(playerId);</span>
+    }
+
+    /**
+     * Add a player to the game.
+     *
+     * @param playerName the player's name
+     * @return the player's player ID
+     */
+    public final int addPlayer(final String playerName) {
+<span class="nc" id="L242">        this.currentMaxId = nextId();</span>
+<span class="nc" id="L243">        this.players.putIfAbsent(this.currentMaxId,</span>
+                new Player(this.currentMaxId,
+                        playerName,
+                        this.initialFood,
+                        this.initialGold,
+                        this.initialImps,
+                        this.initialEvilness,
+                        new Dungeon()));
+<span class="nc" id="L251">        this.activeIds.add(this.currentMaxId);</span>
+<span class="nc" id="L252">        return this.currentMaxId;</span>
+    }
+
+    /**
+     * Remove a player from the game.
+     *
+     * @param playerId the player's player ID
+     */
+    public final void removePlayer(final int playerId) {
+<span class="nc" id="L261">        this.players.remove(playerId);</span>
+<span class="nc" id="L262">        this.activeIds.remove(playerId);</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">        if (this.startingPlayer == playerId) {</span>
+<span class="nc" id="L264">            nextPlayer();</span>
+        }
+<span class="nc" id="L266">    }</span>
+
+    /**
+     * Draw a monster from the stack and add it to the available monsters for this round.
+     *
+     * @return the drawn monster
+     */
+    public final Monster drawMonster() {
+<span class="nc" id="L274">        final Monster monster = this.monsters.remove(0);</span>
+<span class="nc" id="L275">        this.availableMonsters.add(monster);</span>
+<span class="nc" id="L276">        return monster;</span>
+    }
+
+    /**
+     * Draw an adventurer from the stack and add it to the available adventurers for this round.
+     *
+     * @return the drawn adventurer
+     */
+    public final Adventurer drawAdventurer() {
+<span class="nc" id="L285">        final Adventurer adventurer = this.adventurers.remove(0);</span>
+<span class="nc" id="L286">        this.queueingAdventurers.add(adventurer);</span>
+<span class="nc" id="L287">        return adventurer;</span>
+    }
+
+    /**
+     * Draw a trap from the stack.
+     *
+     * @return the drawn trap
+     */
+    public final Trap drawTrap() {
+<span class="nc" id="L296">        return this.traps.remove(0);</span>
+    }
+
+    /**
+     * Draw a room from the stack and add it to the available rooms for this round.
+     *
+     * @return the drawn room
+     */
+    public final Room drawRoom() {
+<span class="nc" id="L305">        final Room room = this.rooms.remove(0);</span>
+<span class="nc" id="L306">        this.availableRooms.add(room);</span>
+<span class="nc" id="L307">        return room;</span>
+    }
+
+    /**
+     * Check whether there are any rooms left for construction this round.
+     *
+     * @return whether there are any rooms left for construction
+     */
+    public final boolean availableRoomsLeft() {
+<span class="nc bnc" id="L316" title="All 2 branches missed.">        return !this.availableRooms.isEmpty();</span>
+    }
+
+    /**
+     * Remove a monster that was available for employment this round.
+     *
+     * @param monster the monster to remove
+     */
+    public final void removeAvailableMonster(final Monster monster) {
+<span class="nc" id="L325">        this.availableMonsters.remove(monster);</span>
+<span class="nc" id="L326">    }</span>
+
+    /**
+     * Remove a room that was available for construction this round.
+     *
+     * @param room the room to remove
+     */
+    public final void removeAvailableRoom(final Room room) {
+<span class="nc" id="L334">        this.availableRooms.remove(room);</span>
+<span class="nc" id="L335">    }</span>
+
+    /**
+     * Get the next most difficult adventurer available this round.
+     *
+     * @return the adventurer
+     */
+    public Adventurer popAdventurer() {
+<span class="nc" id="L343">        this.queueingAdventurers.sort(</span>
+<span class="nc" id="L344">                Comparator.comparing(Adventurer::getDifficulty)</span>
+<span class="nc" id="L345">                        .thenComparing(Adventurer::getId));</span>
+<span class="nc" id="L346">        return this.queueingAdventurers.remove(0);</span>
+    }
+
+    /**
+     * Get the side length allowed for dungeons.
+     *
+     * @return the dungeon side length
+     */
+    public int getDungeonSideLength() {
+<span class="nc" id="L355">        return this.dungeonSideLength;</span>
+    }
+
+    /**
+     * Clear all cards that were drawn for the current season.
+     */
+    public void seasonalCleanup() {
+<span class="nc" id="L362">        this.availableRooms.clear();</span>
+<span class="nc" id="L363">        this.availableMonsters.clear();</span>
+<span class="nc" id="L364">        this.queueingAdventurers.clear();</span>
+<span class="nc" id="L365">        this.availableSpells.clear();</span>
+<span class="nc" id="L366">    }</span>
+
+    /**
+     * Shuffle all card decks in the correct order.
+     */
+    public void shuffleCards() {
+<span class="nc" id="L372">        Collections.shuffle(this.monsters, this.random);</span>
+<span class="nc" id="L373">        Collections.shuffle(this.adventurers, this.random);</span>
+<span class="nc" id="L374">        Collections.shuffle(this.traps, this.random);</span>
+<span class="nc" id="L375">        Collections.shuffle(this.rooms, this.random);</span>
+<span class="nc" id="L376">        Collections.shuffle(this.spells, this.random);</span>
+<span class="nc" id="L377">    }</span>
+
+    public Random getRandomObject() {
+<span class="nc" id="L380">        return random;</span>
+    }
+
+    /* Added functions*/
+
+    /**
+     * remove one spell from the list of spells to add to the
+     * available spells
+     *
+     * @return the spell removed
+     */
+    public Spell drawSpell() {
+<span class="nc" id="L392">        final Spell spellDrawn = spells.remove(0);</span>
+<span class="nc" id="L393">        availableSpells.add(spellDrawn);</span>
+<span class="nc" id="L394">        return spellDrawn;</span>
+    }
+
+    /**
+     * getting a list of spell triggered in a specific slot
+     *
+     * @param bidType the bidType of the slot
+     * @param slot    the specific slot
+     * @return a list of spells triggered in this slot
+     */
+
+    public List&lt;Spell&gt; getAvailableSpell(final BidType bidType, final int slot) {
+
+<span class="nc" id="L407">        return this.availableSpells.stream()</span>
+<span class="nc bnc" id="L408" title="All 4 branches missed.">                .filter(s -&gt; s.getBidType() == bidType &amp;&amp; s.getSlot() == slot).toList();</span>
+
+    }
+
+    public void removeAvailableSpell(final List&lt;Spell&gt; spell) {
+<span class="nc bnc" id="L413" title="All 2 branches missed.">        for (final Spell s : spell) {</span>
+<span class="nc" id="L414">            this.availableSpells.remove(s);</span>
+<span class="nc" id="L415">        }</span>
+<span class="nc" id="L416">    }</span>
+
+    public int getMaxYear() {
+<span class="nc" id="L419">        return maxYear;</span>
+    }
+
+    public List&lt;Adventurer&gt; getAdventurers() {
+<span class="fc" id="L423">        return adventurers;</span>
+    }
+
+    public List&lt;Spell&gt; getSpells() {
+<span class="fc" id="L427">        return spells;</span>
+    }
+    /*added for system test*/
+
+    public Set&lt;Integer&gt; getActiveIds() {
+<span class="nc" id="L432">        return activeIds;</span>
+    }
+
+    public List&lt;Monster&gt; getAvailableMonsters() {
+<span class="nc" id="L436">        return availableMonsters;</span>
+    }
+
+    public List&lt;Room&gt; getAvailableRooms() {
+<span class="nc" id="L440">        return availableRooms;</span>
+    }
+
+    public List&lt;Adventurer&gt; getQueueingAdventurers() {
+<span class="nc" id="L444">        return queueingAdventurers;</span>
+    }
+
+    public int getMaxPlayers() {
+<span class="nc" id="L448">        return maxPlayers;</span>
+    }
+
+    public int getInitialFood() {
+<span class="nc" id="L452">        return initialFood;</span>
+    }
+
+    public int getInitialGold() {
+<span class="nc" id="L456">        return initialGold;</span>
+    }
+
+    public int getInitialImps() {
+<span class="nc" id="L460">        return initialImps;</span>
+    }
+
+    public List&lt;Monster&gt; getMonsters() {
+<span class="nc" id="L464">        return monsters;</span>
+    }
+
+    public List&lt;Trap&gt; getTraps() {
+<span class="nc" id="L468">        return traps;</span>
+    }
+
+    public List&lt;Room&gt; getRooms() {
+<span class="nc" id="L472">        return rooms;</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

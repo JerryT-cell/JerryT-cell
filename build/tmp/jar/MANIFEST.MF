@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Main-Class: de.unisaarland.cs.se.selab.Main
+Entry-Point: de.unisaarland.cs.se.selab.Main
+Implementation-Title: SeLab
+Application-Name: SeLab
+Implementation-Version: 0.1
+

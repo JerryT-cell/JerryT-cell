@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConnectionUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab</a> &gt; <span class="el_source">ConnectionUtils.java</span></div><h1>ConnectionUtils.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab;
+
+import de.unisaarland.cs.se.selab.comm.TimeoutException;
+import de.unisaarland.cs.se.selab.commands.ActionResult;
+import de.unisaarland.cs.se.selab.commands.Command;
+import de.unisaarland.cs.se.selab.commands.LeaveCommand;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.state.State;
+
+/**
+ * Utility class for server connection related functionality.
+ */
+public final class ConnectionUtils {
+
+    // This is a utility class that should not be instantiated.
+    private ConnectionUtils() {}
+
+    /**
+     * Helper function to handle incoming commands until a sufficient command was executed.
+     * &lt;p&gt;
+     * This function relies on the {@link ActionResult}
+     * returned by the commands.
+     * It repeatedly polls and executes the next action until the result confirms that we should
+     * continue or a timeout exception is encountered.
+     * &lt;/p&gt;
+     *
+     * @param model      the model to which the action based changes should apply
+     * @param connection the connection to the client to transmit events
+     * @param player     the player which is supposed to act
+     * @return a result that indicates how the game should continue
+     */
+    public static ActionResult executePlayerCommand(final Model model,
+                                                    final ConnectionWrapper connection,
+                                                    final State.Phase phase,
+                                                    final Player player) {
+        try {
+<span class="nc" id="L38">            connection.sendActNow(player.getId());</span>
+<span class="nc" id="L39">            Command command = connection.nextAction();</span>
+<span class="nc" id="L40">            ActionResult result = command.execute(model, connection, phase, player);</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">            while (result == ActionResult.RETRY) {</span>
+<span class="nc bnc" id="L42" title="All 2 branches missed.">                if (!player.isAlive()) {</span>
+                    // the current player left, so we skip the action
+<span class="nc" id="L44">                    return ActionResult.PROCEED;</span>
+                }
+<span class="nc bnc" id="L46" title="All 2 branches missed.">                if (player.getId() == command.getId()) {</span>
+<span class="nc" id="L47">                    connection.sendActNow(player.getId());</span>
+                }
+<span class="nc" id="L49">                command = connection.nextAction();</span>
+<span class="nc" id="L50">                result = command.execute(model, connection, phase, player);</span>
+            }
+<span class="nc" id="L52">            return result;</span>
+<span class="nc" id="L53">        } catch (final TimeoutException exception) {</span>
+<span class="nc" id="L54">            return new LeaveCommand(player.getId()).execute(model, connection, phase);</span>
+        }
+    }
+
+    /**
+     * Change a player's food and notify all players.
+     *
+     * @param player     the player whose food changes
+     * @param amount     the amount of the change
+     * @param connection the connection to the client to transmit events
+     */
+    public static void changeFood(final Player player, final int amount,
+                                  final ConnectionWrapper connection) {
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (player.getFood() + amount &gt;= 0) {</span>
+<span class="nc" id="L68">            player.changeFood(amount);</span>
+<span class="nc" id="L69">            connection.sendFoodChanged(player.getId(), amount);</span>
+        }
+<span class="nc" id="L71">    }</span>
+
+    /**
+     * Change a player's gold and notify all players.
+     *
+     * @param player     the player whose gold changes
+     * @param amount     the amount of the change
+     * @param connection the connection to the client to transmit events
+     */
+    public static void changeGold(final Player player, final int amount,
+                                  final ConnectionWrapper connection) {
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        if (player.getGold() + amount &gt;= 0) {</span>
+<span class="nc" id="L83">            player.changeGold(amount);</span>
+<span class="nc" id="L84">            connection.sendGoldChanged(player.getId(), amount);</span>
+        }
+<span class="nc" id="L86">    }</span>
+
+    /**
+     * Change a player's evilness and notify all players.
+     *
+     * @param player     the player whose evilness changes
+     * @param amount     the amount of the change
+     * @param connection the connection to the client to transmit events
+     */
+    public static void changeEvilness(final Player player, final int amount,
+                                      final ConnectionWrapper connection) {
+<span class="nc" id="L97">        final int evilness = player.getEvilness() + amount;</span>
+<span class="nc bnc" id="L98" title="All 4 branches missed.">        if (evilness &gt;= Player.MIN_EVILNESS &amp;&amp; evilness &lt;= Player.MAX_EVILNESS) {</span>
+<span class="nc" id="L99">            player.changeEvilness(amount);</span>
+<span class="nc" id="L100">            connection.sendEvilnessChanged(player.getId(), amount);</span>
+        }
+<span class="nc" id="L102">    }</span>
+
+    /**
+     * Change a player's imps and notify all players.
+     *
+     * @param player     the player whose imps changes
+     * @param amount     the amount of the change
+     * @param connection the connection to the client to transmit events
+     */
+    public static void changeImps(final Player player, final int amount,
+                                  final ConnectionWrapper connection) {
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if (amount &gt;= 0) {</span>
+<span class="nc" id="L114">            player.changeImps(amount);</span>
+<span class="nc" id="L115">            connection.sendImpsChanged(player.getId(), amount);</span>
+        }
+<span class="nc" id="L117">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

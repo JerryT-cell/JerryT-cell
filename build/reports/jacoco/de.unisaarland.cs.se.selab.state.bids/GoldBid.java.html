@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GoldBid.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.state.bids</a> &gt; <span class="el_source">GoldBid.java</span></div><h1>GoldBid.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.state.bids;
+
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.commands.ActionResult;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.model.dungeon.Dungeon;
+import de.unisaarland.cs.se.selab.model.dungeon.Tunnel;
+import de.unisaarland.cs.se.selab.state.BuildingState;
+import java.util.List;
+
+/**
+ * Class for gold bids.
+ */
+public final class GoldBid extends Bid {
+
+    GoldBid(final Player player, final int slot) {
+<span class="nc" id="L18">        super(player, slot);</span>
+<span class="nc" id="L19">    }</span>
+
+    @Override
+    protected ActionResult bidEvalImpl(final Model model, final ConnectionWrapper connection) {
+<span class="nc" id="L23">        final int availableImps = this.player.getImps();</span>
+<span class="nc bnc" id="L24" title="All 2 branches missed.">        if (availableImps &lt;= 0) {</span>
+<span class="nc" id="L25">            return ActionResult.PROCEED;</span>
+        }
+<span class="nc" id="L27">        final Dungeon dungeon = this.player.getDungeon();</span>
+<span class="nc" id="L28">        final int allowedMiners = this.slot + 1;</span>
+
+<span class="nc" id="L30">        final List&lt;Tunnel&gt; availableTunnels = dungeon.getGraph().stream()</span>
+<span class="nc bnc" id="L31" title="All 6 branches missed.">                .filter(tunnel -&gt; tunnel.canMineGold() &amp;&amp; !tunnel.isRoom() &amp;&amp; !tunnel.isConquered())</span>
+<span class="nc" id="L32">                .toList();</span>
+<span class="nc" id="L33">        final int maxMiners =</span>
+<span class="nc" id="L34">                Math.min(allowedMiners, Math.min(availableImps, availableTunnels.size()));</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        final boolean needsSupervision = maxMiners &gt; BuildingState.NO_SUPERVISION_LIMIT;</span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        final boolean canAffordSupervision = availableImps &gt;= maxMiners + 1;</span>
+
+        final int placedImps;
+        final int actualMiners;
+<span class="nc bnc" id="L40" title="All 2 branches missed.">        if (canAffordSupervision) {</span>
+<span class="nc" id="L41">            actualMiners = maxMiners;</span>
+<span class="nc bnc" id="L42" title="All 2 branches missed.">            placedImps = maxMiners + (needsSupervision ? 1 : 0);</span>
+<span class="nc bnc" id="L43" title="All 2 branches missed.">            if (needsSupervision) {</span>
+<span class="nc" id="L44">                dungeon.addSupervision();</span>
+            }
+        } else {
+<span class="nc bnc" id="L47" title="All 2 branches missed.">            actualMiners = maxMiners - (needsSupervision ? 1 : 0);</span>
+<span class="nc" id="L48">            placedImps = actualMiners;</span>
+        }
+
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if (placedImps &gt; 0) {</span>
+<span class="nc" id="L52">            availableTunnels.stream().limit(actualMiners).forEach(Tunnel::setGoldMiner);</span>
+<span class="nc" id="L53">            this.player.changeImps(-placedImps);</span>
+<span class="nc" id="L54">            connection.sendImpsChanged(this.player.getId(), -placedImps);</span>
+        }
+<span class="nc" id="L56">        return ActionResult.PROCEED;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

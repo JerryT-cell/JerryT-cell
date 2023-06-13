@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Adventurer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.model</a> &gt; <span class="el_source">Adventurer.java</span></div><h1>Adventurer.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.model;
+
+/**
+ * Class for adventurers.
+ */
+public class Adventurer {
+
+    private final int id;
+    private final int difficulty;
+    private int healValue;
+    private int defuseValue;
+    private final boolean charge;
+    private final int maxHealthPoints;
+    private int currentHealthPoints;
+    private boolean defeated;
+    private final int magicPoints;
+    private final int maxHealValue;
+    private final int maxDefuseValue;
+
+    public Adventurer(final int id, final int difficulty, final int healthPoints,
+                      final int healValue, final int defuseValue, final boolean charge,
+<span class="fc" id="L22">                      final int magicPoints) {</span>
+<span class="fc" id="L23">        this.id = id;</span>
+<span class="fc" id="L24">        this.difficulty = difficulty;</span>
+<span class="fc" id="L25">        this.maxHealthPoints = healthPoints;</span>
+<span class="fc" id="L26">        this.currentHealthPoints = this.maxHealthPoints;</span>
+<span class="fc" id="L27">        this.healValue = healValue;</span>
+<span class="fc" id="L28">        this.defuseValue = defuseValue;</span>
+<span class="fc" id="L29">        this.charge = charge;</span>
+<span class="fc" id="L30">        this.defeated = false;</span>
+<span class="fc" id="L31">        this.maxHealValue = healValue;</span>
+<span class="fc" id="L32">        this.maxDefuseValue = defuseValue;</span>
+<span class="fc" id="L33">        this.magicPoints = magicPoints;</span>
+
+<span class="fc" id="L35">    }</span>
+
+    public int getId() {
+<span class="nc" id="L38">        return id;</span>
+    }
+
+    public int getDifficulty() {
+<span class="nc" id="L42">        return difficulty;</span>
+    }
+
+    public int getHealValue() {
+<span class="nc" id="L46">        return healValue;</span>
+    }
+
+    public int getDefuseValue() {
+<span class="nc" id="L50">        return defuseValue;</span>
+    }
+
+    /**
+     * Heal an adventurer by the given amount.
+     * &lt;p&gt;
+     * This performs a bounds-check for the adventurers maximal health points before healing.
+     * &lt;/p&gt;
+     *
+     * @param amount the amount to heal
+     * @return the actual amount of health points the player was healed (after bounds-check)
+     */
+    public int heal(final int amount) {
+<span class="nc" id="L63">        final int effectiveHeal = Math.min(this.maxHealthPoints - this.currentHealthPoints, amount);</span>
+<span class="nc" id="L64">        this.currentHealthPoints += effectiveHeal;</span>
+<span class="nc" id="L65">        return effectiveHeal;</span>
+    }
+
+    /**
+     * Damage an adventurer by the given amount.
+     * &lt;p&gt;
+     * This performs a bounds-check for the adventurers minimal health points before damaging and
+     * sets the adventurer's defeated flag if the health points drop to 0.
+     * &lt;/p&gt;
+     *
+     * @param amount the amount of damage
+     * @return the actual amount of health points the player was damaged (after bounds-check)
+     */
+    public int damage(final int amount) {
+<span class="nc" id="L79">        final int effectiveDamage = Math.min(this.currentHealthPoints, amount);</span>
+<span class="nc" id="L80">        this.currentHealthPoints -= effectiveDamage;</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">        if (this.currentHealthPoints &lt;= 0) {</span>
+<span class="nc" id="L82">            this.defeated = true;</span>
+        }
+<span class="nc" id="L84">        return effectiveDamage;</span>
+    }
+
+    public boolean isDefeated() {
+<span class="nc" id="L88">        return this.defeated;</span>
+    }
+
+    public boolean isCharging() {
+<span class="nc" id="L92">        return this.charge;</span>
+    }
+    /* added */
+
+    public void increaseHealthPoints(final int amount) {
+<span class="nc" id="L97">        currentHealthPoints += amount;</span>
+<span class="nc" id="L98">    }</span>
+
+    public void increaseDefuseValue(final int amount) {
+<span class="nc" id="L101">        defuseValue += amount;</span>
+<span class="nc" id="L102">    }</span>
+
+    public void increaseHealValue(final int amount) {
+<span class="nc" id="L105">        healValue += amount;</span>
+<span class="nc" id="L106">    }</span>
+
+    public void restoreOriginalValues() {
+
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        if (currentHealthPoints &gt; maxHealthPoints) {</span>
+<span class="nc" id="L111">            currentHealthPoints = maxHealthPoints;</span>
+        }
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if (healValue &gt; maxHealValue) {</span>
+<span class="nc" id="L114">            healValue = maxHealValue;</span>
+        }
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        if (defuseValue &gt; maxDefuseValue) {</span>
+<span class="nc" id="L117">            defuseValue = maxDefuseValue;</span>
+        }
+
+<span class="nc" id="L120">    }</span>
+
+    public int getMagicPoints() {
+<span class="fc" id="L123">        return magicPoints;</span>
+    }
+
+    public int getMaxHealValue() {
+<span class="nc" id="L127">        return maxHealValue;</span>
+    }
+
+    public int getMaxDefuseValue() {
+<span class="nc" id="L131">        return maxDefuseValue;</span>
+    }
+
+    public int getCurrentHealthPoints() {
+<span class="nc" id="L135">        return currentHealthPoints;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

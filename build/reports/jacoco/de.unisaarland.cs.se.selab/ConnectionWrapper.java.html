@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConnectionWrapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab</a> &gt; <span class="el_source">ConnectionWrapper.java</span></div><h1>ConnectionWrapper.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab;
+
+import de.unisaarland.cs.se.selab.comm.BidType;
+import de.unisaarland.cs.se.selab.comm.ServerConnection;
+import de.unisaarland.cs.se.selab.comm.TimeoutException;
+import de.unisaarland.cs.se.selab.commands.Command;
+import de.unisaarland.cs.se.selab.commands.CommandFactory;
+import de.unisaarland.cs.se.selab.model.dungeon.Coordinate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * The connection wrapper provides easy access to the server connection and manages the
+ * registered players.
+ */
+public class ConnectionWrapper {
+
+<span class="nc" id="L21">    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionWrapper.class);</span>
+
+    private final Map&lt;Integer, Integer&gt; commToPlayer;
+    private final Map&lt;Integer, Integer&gt; playerToComm;
+    private final ServerConnection&lt;Command&gt; connection;
+
+    private final String config;
+
+<span class="nc" id="L29">    public ConnectionWrapper(final int port, final int timeout, final String config) {</span>
+<span class="nc" id="L30">        this.commToPlayer = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L31">        this.playerToComm = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L32">        this.connection = new ServerConnection&lt;&gt;(port, timeout,</span>
+                new CommandFactory(this.commToPlayer));
+<span class="nc" id="L34">        this.config = config;</span>
+<span class="nc" id="L35">    }</span>
+
+    /**
+     * Register a player with the server.
+     *
+     * @param commId   the player's communication ID
+     * @param playerId the player's player ID
+     */
+    public void addPlayer(final int commId, final int playerId) {
+<span class="nc" id="L44">        this.commToPlayer.putIfAbsent(commId, playerId);</span>
+<span class="nc" id="L45">        this.playerToComm.putIfAbsent(playerId, commId);</span>
+<span class="nc" id="L46">    }</span>
+
+    /**
+     * Remove a player from the server.
+     *
+     * @param playerId the player's player ID
+     */
+    public void removePlayer(final int playerId) {
+<span class="nc" id="L54">        this.commToPlayer.remove(commId(playerId));</span>
+<span class="nc" id="L55">        this.playerToComm.remove(playerId);</span>
+<span class="nc" id="L56">    }</span>
+
+    /**
+     * Retrieve a list of all currently registered communication IDs.
+     *
+     * @return a list of communicaton IDs.
+     */
+    public List&lt;Integer&gt; getCommIds() {
+<span class="nc" id="L64">        return this.playerToComm.values().stream().toList();</span>
+    }
+
+    /**
+     * Retrieve the communication ID for a given player.
+     *
+     * @param playerId the player's player ID
+     * @return the player's communication ID
+     */
+    public int commId(final int playerId) {
+<span class="nc" id="L74">        return this.playerToComm.get(playerId);</span>
+    }
+
+    public Command nextAction() throws TimeoutException {
+<span class="nc" id="L78">        return this.connection.nextAction();</span>
+    }
+
+    /////////////////////////////////////////////
+    //           INDIVIDUAL EVENTS             //
+    /////////////////////////////////////////////
+
+    public void sendActionFailed(final int playerId, final String message) {
+<span class="nc" id="L86">        LOGGER.warn(&quot;Command failed for player {}: '{}'&quot;, playerId, message);</span>
+<span class="nc" id="L87">        this.connection.sendActionFailed(commId(playerId), message);</span>
+<span class="nc" id="L88">    }</span>
+
+    public void sendConfig(final int playerId) {
+<span class="nc" id="L91">        LOGGER.debug(&quot;Config sent to player {}&quot;, playerId);</span>
+<span class="nc" id="L92">        this.connection.sendConfig(commId(playerId), this.config);</span>
+<span class="nc" id="L93">    }</span>
+
+    public void sendDefendYourself(final int playerId) {
+<span class="nc" id="L96">        LOGGER.debug(&quot;Player {} must defend herself&quot;, playerId);</span>
+<span class="nc" id="L97">        this.connection.sendDefendYourself(commId(playerId));</span>
+<span class="nc" id="L98">    }</span>
+
+    public void sendDigTunnel(final int playerId) {
+<span class="nc" id="L101">        LOGGER.debug(&quot;Player {} must dig a tunnel&quot;, playerId);</span>
+<span class="nc" id="L102">        this.connection.sendDigTunnel(commId(playerId));</span>
+<span class="nc" id="L103">    }</span>
+
+    public void sendPlaceRoom(final int playerId) {
+<span class="nc" id="L106">        LOGGER.debug(&quot;Player {} must place a room&quot;, playerId);</span>
+<span class="nc" id="L107">        this.connection.sendPlaceRoom(commId(playerId));</span>
+<span class="nc" id="L108">    }</span>
+
+    public void sendSelectMonster(final int playerId) {
+<span class="nc" id="L111">        LOGGER.debug(&quot;Player {} must select a monster&quot;, playerId);</span>
+<span class="nc" id="L112">        this.connection.sendSelectMonster(commId(playerId));</span>
+<span class="nc" id="L113">    }</span>
+
+    public void sendSetBattleGround(final int playerId) {
+<span class="nc" id="L116">        LOGGER.debug(&quot;Player {} must select a battleground&quot;, playerId);</span>
+<span class="nc" id="L117">        this.connection.sendSetBattleGround(commId(playerId));</span>
+<span class="nc" id="L118">    }</span>
+
+    public void sendCounterSpell(final int playerId) {
+<span class="nc" id="L121">        LOGGER.debug(&quot;Player {} must send a counter spell&quot;, playerId);</span>
+<span class="nc" id="L122">        this.connection.sendCounterSpell(commId(playerId));</span>
+<span class="nc" id="L123">    }</span>
+
+    public void sendActNow(final int playerId) {
+<span class="nc" id="L126">        LOGGER.debug(&quot;Player {} must act&quot;, playerId);</span>
+<span class="nc" id="L127">        this.connection.sendActNow(commId(playerId));</span>
+<span class="nc" id="L128">    }</span>
+
+
+    /////////////////////////////////////////////
+    //            BROADCAST EVENTS             //
+    /////////////////////////////////////////////
+
+    public void sendActNow() {
+<span class="nc" id="L136">        LOGGER.debug(&quot;(Broadcast) All players must act&quot;);</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L138">            this.connection.sendActNow(commId);</span>
+<span class="nc" id="L139">        }</span>
+<span class="nc" id="L140">    }</span>
+
+    public void sendRegistrationAborted() {
+<span class="nc" id="L143">        LOGGER.warn(&quot;(Broadcast) Registration aborted&quot;);</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L145">            this.connection.sendRegistrationAborted(commId);</span>
+<span class="nc" id="L146">        }</span>
+<span class="nc" id="L147">    }</span>
+
+    public void sendGameStarted() {
+<span class="nc" id="L150">        LOGGER.info(&quot;(Broadcast) Game started&quot;);</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L152">            this.connection.sendGameStarted(commId);</span>
+<span class="nc" id="L153">        }</span>
+<span class="nc" id="L154">    }</span>
+
+    public void sendNextYear(final int year) {
+<span class="nc" id="L157">        LOGGER.debug(&quot;(Broadcast) Year {} has started&quot;, year);</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L159">            this.connection.sendNextYear(commId, year);</span>
+<span class="nc" id="L160">        }</span>
+<span class="nc" id="L161">    }</span>
+
+    public void sendNextRound(final int round) {
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L165">            this.connection.sendNextRound(commId, round);</span>
+<span class="nc" id="L166">        }</span>
+<span class="nc" id="L167">    }</span>
+
+    public void sendFoodChanged(final int playerId, final int amount) {
+<span class="nc" id="L170">        LOGGER.debug(&quot;(Broadcast) Food changed by {} for player {}&quot;, amount, playerId);</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L172">            this.connection.sendFoodChanged(commId, amount, playerId);</span>
+<span class="nc" id="L173">        }</span>
+<span class="nc" id="L174">    }</span>
+
+    public void sendGoldChanged(final int playerId, final int amount) {
+<span class="nc" id="L177">        LOGGER.debug(&quot;(Broadcast) Gold changed by {} for player {}&quot;, amount, playerId);</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L179">            this.connection.sendGoldChanged(commId, amount, playerId);</span>
+<span class="nc" id="L180">        }</span>
+<span class="nc" id="L181">    }</span>
+
+    public void sendImpsChanged(final int playerId, final int amount) {
+<span class="nc" id="L184">        LOGGER.debug(&quot;(Broadcast) Imps changed by {} for player {}&quot;, amount, playerId);</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L186">            this.connection.sendImpsChanged(commId, amount, playerId);</span>
+<span class="nc" id="L187">        }</span>
+<span class="nc" id="L188">    }</span>
+
+    public void sendBidPlaced(final int slot, final int playerId, final BidType type) {
+<span class="nc" id="L191">        LOGGER.debug(&quot;(Broadcast) Player {} placed bid {} in slot {}&quot;, playerId, type, slot);</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L193">            this.connection.sendBidPlaced(commId, type, playerId, slot);</span>
+<span class="nc" id="L194">        }</span>
+<span class="nc" id="L195">    }</span>
+
+    public void sendPlayer(final int playerId, final String playerName) {
+<span class="nc" id="L198">        LOGGER.debug(&quot;(Broadcast) Player {} is {}&quot;, playerId, playerName);</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L200">            this.connection.sendPlayer(commId, playerName, playerId);</span>
+<span class="nc" id="L201">        }</span>
+<span class="nc" id="L202">    }</span>
+
+    public void sendTunnelDug(final int playerId, final Coordinate coordinate) {
+<span class="nc" id="L205">        LOGGER.debug(&quot;(Broadcast) Player {} dug a tunnel at coordinates ({}, {})&quot;,</span>
+<span class="nc" id="L206">                playerId, coordinate.posX(), coordinate.posY());</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L208">            this.connection.sendTunnelDug(commId, playerId, coordinate.posX(), coordinate.posY());</span>
+<span class="nc" id="L209">        }</span>
+<span class="nc" id="L210">    }</span>
+
+    public void sendLeft(final int playerId) {
+<span class="nc" id="L213">        LOGGER.debug(&quot;(Broadcast) Player {} has left the game&quot;, playerId);</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L215">            this.connection.sendLeft(commId, playerId);</span>
+<span class="nc" id="L216">        }</span>
+<span class="nc" id="L217">    }</span>
+
+    public void sendAdventurerDamaged(final int adventurer, final int amount) {
+<span class="nc" id="L220">        LOGGER.debug(&quot;(Broadcast) Adventurer {} took {} points of damage&quot;, adventurer, amount);</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L222">            this.connection.sendAdventurerDamaged(commId, adventurer, amount);</span>
+<span class="nc" id="L223">        }</span>
+<span class="nc" id="L224">    }</span>
+
+    public void sendAdventurerImprisoned(final int adventurer) {
+<span class="nc" id="L227">        LOGGER.debug(&quot;(Broadcast) Adventurer {} was imprisoned&quot;, adventurer);</span>
+<span class="nc bnc" id="L228" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L229">            this.connection.sendAdventurerImprisoned(commId, adventurer);</span>
+<span class="nc" id="L230">        }</span>
+<span class="nc" id="L231">    }</span>
+
+    public void sendGameEnd(final int playerId, final int points) {
+<span class="nc" id="L234">        LOGGER.debug(&quot;(Broadcast) The game has ended&quot;);</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L236">            this.connection.sendGameEnd(commId, playerId, points);</span>
+<span class="nc" id="L237">        }</span>
+<span class="nc" id="L238">    }</span>
+
+    public void sendAdventurerArrived(final int playerId, final int adventurerId) {
+<span class="nc" id="L241">        LOGGER.debug(&quot;(Broadcast) Adventurer {} arrived at player {}&quot;, adventurerId, playerId);</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L243">            this.connection.sendAdventurerArrived(commId, adventurerId, playerId);</span>
+<span class="nc" id="L244">        }</span>
+<span class="nc" id="L245">    }</span>
+
+    public void sendAdventurerHealed(final int healerId, final int targetId, final int amount) {
+<span class="nc" id="L248">        LOGGER.debug(&quot;(Broadcast) Adventurer {} was healed by healer {}  for {} health points&quot;,</span>
+<span class="nc" id="L249">                targetId, healerId, amount);</span>
+<span class="nc bnc" id="L250" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L251">            this.connection.sendAdventurerHealed(commId, amount, healerId, targetId);</span>
+<span class="nc" id="L252">        }</span>
+<span class="nc" id="L253">    }</span>
+
+    public void sendMonsterDrawn(final int monsterId) {
+<span class="nc" id="L256">        LOGGER.debug(&quot;(Broadcast) Monster {} was drawn&quot;, monsterId);</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L258">            this.connection.sendMonsterDrawn(commId, monsterId);</span>
+<span class="nc" id="L259">        }</span>
+<span class="nc" id="L260">    }</span>
+
+    public void sendAdventurerDrawn(final int adventurerId) {
+<span class="nc" id="L263">        LOGGER.debug(&quot;(Broadcast) Adventurer {} was drawn&quot;, adventurerId);</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L265">            this.connection.sendAdventurerDrawn(commId, adventurerId);</span>
+<span class="nc" id="L266">        }</span>
+<span class="nc" id="L267">    }</span>
+
+    public void sendBidRetrieved(final int playerId, final BidType type) {
+<span class="nc" id="L270">        LOGGER.debug(&quot;(Broadcast) Player {} retrieved bid {}&quot;, playerId, type);</span>
+<span class="nc bnc" id="L271" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L272">            this.connection.sendBidRetrieved(commId, type, playerId);</span>
+<span class="nc" id="L273">        }</span>
+<span class="nc" id="L274">    }</span>
+
+    public void sendEvilnessChanged(final int playerId, final int amount) {
+<span class="nc" id="L277">        LOGGER.debug(&quot;(Broadcast) Evilness changed by {} for player {}&quot;, amount, playerId);</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L279">            this.connection.sendEvilnessChanged(commId, amount, playerId);</span>
+<span class="nc" id="L280">        }</span>
+<span class="nc" id="L281">    }</span>
+
+    public void sendMonsterHired(final int playerId, final int monster) {
+<span class="nc" id="L284">        LOGGER.debug(&quot;(Broadcast) Player {} hired monster {}&quot;, playerId, monster);</span>
+<span class="nc bnc" id="L285" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L286">            this.connection.sendMonsterHired(commId, monster, playerId);</span>
+<span class="nc" id="L287">        }</span>
+<span class="nc" id="L288">    }</span>
+
+    public void sendTunnelConquered(final int adventurer, final Coordinate coordinate) {
+<span class="nc" id="L291">        LOGGER.debug(&quot;(Broadcast) Adventurer {} conquered tunnel at coordinates ({}, {})&quot;,</span>
+<span class="nc" id="L292">                adventurer, coordinate.posX(), coordinate.posY());</span>
+<span class="nc bnc" id="L293" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L294">            this.connection.sendTunnelConquered(commId, adventurer, coordinate.posX(),</span>
+<span class="nc" id="L295">                    coordinate.posY());</span>
+<span class="nc" id="L296">        }</span>
+<span class="nc" id="L297">    }</span>
+
+    public void sendAdventurerFled(final int adventurer) {
+<span class="nc" id="L300">        LOGGER.debug(&quot;(Broadcast) Adventurer {} fled from prison&quot;, adventurer);</span>
+<span class="nc bnc" id="L301" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L302">            this.connection.sendAdventurerFled(commId, adventurer);</span>
+<span class="nc" id="L303">        }</span>
+<span class="nc" id="L304">    }</span>
+
+    public void sendTrapAcquired(final int player, final int trap) {
+<span class="nc" id="L307">        LOGGER.debug(&quot;(Broadcast) Player {} acquired trap {}&quot;, player, trap);</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L309">            this.connection.sendTrapAcquired(commId, player, trap);</span>
+<span class="nc" id="L310">        }</span>
+<span class="nc" id="L311">    }</span>
+
+    public void sendTrapPlaced(final int player, final int trap) {
+<span class="nc" id="L314">        LOGGER.debug(&quot;(Broadcast) Player {} placed trap {}&quot;, player, trap);</span>
+<span class="nc bnc" id="L315" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L316">            this.connection.sendTrapPlaced(commId, player, trap);</span>
+<span class="nc" id="L317">        }</span>
+<span class="nc" id="L318">    }</span>
+
+    public void sendBattleGroundSet(final int player, final Coordinate coordinate) {
+<span class="nc" id="L321">        LOGGER.debug(&quot;(Broadcast) Player {} set battleground at coordinates ({}, {})&quot;,</span>
+<span class="nc" id="L322">                player, coordinate.posX(), coordinate.posY());</span>
+<span class="nc bnc" id="L323" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L324">            this.connection.sendBattleGroundSet(commId, player, coordinate.posX(),</span>
+<span class="nc" id="L325">                    coordinate.posY());</span>
+<span class="nc" id="L326">        }</span>
+<span class="nc" id="L327">    }</span>
+
+    public void sendMonsterPlaced(final int monster, final int player) {
+<span class="nc" id="L330">        LOGGER.debug(&quot;(Broadcast) Player {} placed monster {}&quot;, player, monster);</span>
+<span class="nc bnc" id="L331" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L332">            this.connection.sendMonsterPlaced(commId, monster, player);</span>
+<span class="nc" id="L333">        }</span>
+<span class="nc" id="L334">    }</span>
+
+    public void sendRoomBuilt(final int player, final int room, final Coordinate coordinate) {
+<span class="nc" id="L337">        LOGGER.debug(&quot;(Broadcast) Player {} placed room {} at coordinates ({}, {})&quot;,</span>
+<span class="nc" id="L338">                player, room, coordinate.posX(), coordinate.posY());</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L340">            this.connection.sendRoomBuilt(commId, player, room, coordinate.posX(),</span>
+<span class="nc" id="L341">                    coordinate.posY());</span>
+<span class="nc" id="L342">        }</span>
+<span class="nc" id="L343">    }</span>
+
+    public void sendRoomDrawn(final int room) {
+<span class="nc" id="L346">        LOGGER.debug(&quot;(Broadcast) Room {} was drawn&quot;, room);</span>
+<span class="nc bnc" id="L347" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L348">            this.connection.sendRoomDrawn(commId, room);</span>
+<span class="nc" id="L349">        }</span>
+<span class="nc" id="L350">    }</span>
+
+    public void sendRoomActivated(final int player, final int room) {
+<span class="nc" id="L353">        LOGGER.debug(&quot;(Broadcast) Player {} activated room {}&quot;, player, room);</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L355">            this.connection.sendRoomActivated(commId, player, room);</span>
+<span class="nc" id="L356">        }</span>
+<span class="nc" id="L357">    }</span>
+
+    public void sendBiddingStarted() {
+<span class="nc" id="L360">        LOGGER.debug(&quot;(Broadcast) Bidding has started&quot;);</span>
+<span class="nc bnc" id="L361" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L362">            this.connection.sendBiddingStarted(commId);</span>
+<span class="nc" id="L363">        }</span>
+<span class="nc" id="L364">    }</span>
+
+    public void sendSpellDrawn(final int spellId) {
+<span class="nc" id="L367">        LOGGER.debug(&quot;(Broadcast) Spell {} has been drawn&quot;, spellId);</span>
+<span class="nc bnc" id="L368" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L369">            this.connection.sendSpellDrawn(commId, spellId);</span>
+<span class="nc" id="L370">        }</span>
+<span class="nc" id="L371">    }</span>
+
+    public void sendSpellUnlocked(final int spellId, final int playerId) {
+<span class="nc" id="L374">        LOGGER.debug(&quot;(BroadCast) Spell{} was unlocked by player {}&quot;, spellId, playerId);</span>
+<span class="nc bnc" id="L375" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L376">            this.connection.sendSpellUnlocked(commId, spellId, playerId);</span>
+<span class="nc" id="L377">        }</span>
+<span class="nc" id="L378">    }</span>
+
+    public void sendSpellCast(final int spellId, final int playerId) {
+<span class="nc" id="L381">        LOGGER.debug(&quot;(BroadCast) spell{} was casted by player {}&quot;, spellId, playerId);</span>
+<span class="nc bnc" id="L382" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L383">            this.connection.sendSpellCast(commId, spellId, playerId);</span>
+<span class="nc" id="L384">        }</span>
+<span class="nc" id="L385">    }</span>
+
+    public void sendCounterSpellFound(final int playerId) {
+<span class="nc" id="L388">        LOGGER.debug(&quot;(Broadcast) player {} found a spell&quot;, playerId);</span>
+<span class="nc bnc" id="L389" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L390">            this.connection.sendCounterSpellFound(commId, playerId);</span>
+<span class="nc" id="L391">        }</span>
+<span class="nc" id="L392">    }</span>
+
+    public void sendCounterSpellCast(final int playerId) {
+<span class="nc" id="L395">        LOGGER.debug(&quot;(BroadCast) player {} has send a counterspell&quot;, playerId);</span>
+<span class="nc bnc" id="L396" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L397">            this.connection.sendCounterSpellCast(commId, playerId);</span>
+<span class="nc" id="L398">        }</span>
+<span class="nc" id="L399">    }</span>
+
+    public void sendRoomsBlocked(final int playerId, final int round) {
+<span class="nc" id="L402">        LOGGER.debug(&quot;(BroadCast) player {} cannot activate a room in round {}&quot;, playerId, round);</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L404">            this.connection.sendRoomsBlocked(commId, playerId, round);</span>
+<span class="nc" id="L405">        }</span>
+<span class="nc" id="L406">    }</span>
+
+    public void sendBidTypeBlocked(final int player, final BidType bidType, final int round) {
+<span class="nc" id="L409">        LOGGER.debug(&quot;(BroadCast) Player {} cannot place a bid on BidType {}&quot;</span>
+<span class="nc" id="L410">                + &quot; of the biddingSeason{}&quot;, player, bidType, round);</span>
+<span class="nc bnc" id="L411" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L412">            this.connection.sendBidTypeBlocked(commId, player, bidType, round);</span>
+<span class="nc" id="L413">        }</span>
+<span class="nc" id="L414">    }</span>
+
+    public void sendRoomRemoved(final int player, final int room) {
+<span class="nc" id="L417">        LOGGER.debug(&quot;(BroadCast) The room {} of the Player {} has been destroyed&quot;, player, room);</span>
+<span class="nc bnc" id="L418" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L419">            this.connection.sendRoomRemoved(commId, player, room);</span>
+<span class="nc" id="L420">        }</span>
+<span class="nc" id="L421">    }</span>
+
+    public void sendArchmageArrived(final int player) {
+<span class="nc" id="L424">        LOGGER.debug(&quot;(BroadCast) The Archmage Linus arrived in the player {}'s dungeon&quot;, player);</span>
+<span class="nc bnc" id="L425" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L426">            this.connection.sendArchmageArrived(commId, player);</span>
+<span class="nc" id="L427">        }</span>
+<span class="nc" id="L428">    }</span>
+
+    public void sendMonsterRemoved(final int playerId, final int monsterId) {
+<span class="nc" id="L431">        LOGGER.debug(&quot;(BroadCast) The monster{} has been removed from the player{}&quot;, monsterId,</span>
+<span class="nc" id="L432">                playerId);</span>
+<span class="nc bnc" id="L433" title="All 2 branches missed.">        for (final int commId : getCommIds()) {</span>
+<span class="nc" id="L434">            this.connection.sendMonsterRemoved(commId, monsterId, playerId);</span>
+<span class="nc" id="L435">        }</span>
+
+<span class="nc" id="L437">    }</span>
+
+
+    public void close() {
+<span class="nc" id="L441">        this.connection.close();</span>
+<span class="nc" id="L442">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

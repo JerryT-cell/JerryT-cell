@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Dungeon.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.model.dungeon</a> &gt; <span class="el_source">Dungeon.java</span></div><h1>Dungeon.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.model.dungeon;
+
+import de.unisaarland.cs.se.selab.model.Adventurer;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Player;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+
+/**
+ * This holds all dungeon-related data.
+ */
+public class Dungeon {
+
+    private final List&lt;Adventurer&gt; queuingAdventurers;
+    private final List&lt;Adventurer&gt; prison;
+    private final TunnelGraph graph;
+    private Tunnel battleGround;
+    private int supervisingImps;
+    private boolean archmageLinus;
+    private int penguinVisits;
+
+<span class="fc" id="L24">    public Dungeon() {</span>
+<span class="fc" id="L25">        this.queuingAdventurers = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L26">        this.prison = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L27">        this.graph = new TunnelGraph();</span>
+<span class="fc" id="L28">        archmageLinus = false;</span>
+<span class="fc" id="L29">        penguinVisits = 0;</span>
+<span class="fc" id="L30">    }</span>
+
+    public void setBattleGround(final Tunnel battleGround) {
+<span class="nc" id="L33">        this.battleGround = battleGround;</span>
+<span class="nc" id="L34">    }</span>
+
+    public Optional&lt;Tunnel&gt; getBattleGround() {
+<span class="nc" id="L37">        return Optional.ofNullable(this.battleGround);</span>
+    }
+
+    public TunnelGraph getGraph() {
+<span class="nc" id="L41">        return this.graph;</span>
+    }
+
+    public void addAdventurer(final Adventurer adventurer) {
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        if (adventurer.isCharging()) {</span>
+<span class="nc" id="L46">            this.queuingAdventurers.add(0, adventurer);</span>
+        } else {
+<span class="nc" id="L48">            this.queuingAdventurers.add(adventurer);</span>
+        }
+<span class="nc" id="L50">    }</span>
+
+    private void removeDefeatedAdventurers() {
+<span class="nc" id="L53">        final List&lt;Adventurer&gt; defeatedAdventurers = this.queuingAdventurers</span>
+<span class="nc" id="L54">                .stream()</span>
+<span class="nc" id="L55">                .filter(Adventurer::isDefeated)</span>
+<span class="nc" id="L56">                .toList();</span>
+<span class="nc" id="L57">        this.queuingAdventurers.removeAll(defeatedAdventurers);</span>
+<span class="nc" id="L58">    }</span>
+
+    /**
+     * Clear all adventurers from the dungeon.
+     */
+    public void clearAdventurers() {
+<span class="nc" id="L64">        this.queuingAdventurers.clear();</span>
+<span class="nc" id="L65">    }</span>
+
+    /**
+     * Get the adventurer at the given position.
+     *
+     * @param target the adventurer's position
+     * @return the selected adventurer if available
+     */
+    public Optional&lt;Adventurer&gt; getAdventurer(final int target) {
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (getAllAdventurers().size() &lt; target) {</span>
+<span class="nc" id="L75">            return Optional.empty();</span>
+        } else {
+<span class="nc" id="L77">            return Optional.ofNullable(getAllAdventurers().get(target - 1));</span>
+        }
+    }
+
+    /**
+     * Get all adventurers that are still alive in the dungeon.
+     *
+     * @return a list of alive adventurers
+     */
+    public List&lt;Adventurer&gt; getAllAdventurers() {
+<span class="nc" id="L87">        removeDefeatedAdventurers();</span>
+<span class="nc" id="L88">        return new ArrayList&lt;&gt;(this.queuingAdventurers);</span>
+    }
+
+    /**
+     * Check whether there are any adventurers left in the dungeon.
+     *
+     * @return whether there are any adventurers left
+     */
+    public boolean adventurersLeft() {
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        return !getAllAdventurers().isEmpty();</span>
+    }
+
+    /**
+     * Get the number of conquered tiles (rooms and tunnels).
+     *
+     * @return the number of conquered tiles
+     */
+    public final int getNumUnconqueredTiles() {
+<span class="nc bnc" id="L106" title="All 2 branches missed.">        return (int) this.graph.stream().filter(tunnel -&gt; !tunnel.isConquered()).count();</span>
+    }
+
+    /**
+     * Check whether all tunnels and rooms in the dungeon are conquered.
+     *
+     * @return whether all tunnels and rooms are conquered
+     */
+    public final boolean isConquered() {
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        return getNumUnconqueredTiles() == 0;</span>
+    }
+
+    /**
+     * Conquer the current battleground.
+     */
+    public final void conquer() {
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        if (this.battleGround != null) {</span>
+<span class="nc" id="L123">            this.battleGround.conquer();</span>
+        }
+<span class="nc" id="L125">    }</span>
+
+    /**
+     * Assign an imp for supervision.
+     */
+    public void addSupervision() {
+<span class="nc" id="L131">        this.supervisingImps++;</span>
+<span class="nc" id="L132">    }</span>
+
+    /**
+     * Return all supervising imps from supervision.
+     *
+     * @return the number of imps that were supervising
+     */
+    private int returnSupervision() {
+<span class="nc" id="L140">        final int supervisors = this.supervisingImps;</span>
+<span class="nc" id="L141">        this.supervisingImps = 0;</span>
+<span class="nc" id="L142">        return supervisors;</span>
+    }
+
+    /**
+     * Return all mining imps from their jobs.
+     *
+     * @return the number of imps returning from mining jobs
+     */
+    public int returnMiners() {
+<span class="nc" id="L151">        return returnSupervision() + this.graph</span>
+<span class="nc" id="L152">                .map(Tunnel::returnMiners)</span>
+<span class="nc" id="L153">                .stream()</span>
+<span class="nc" id="L154">                .reduce(0, Integer::sum);</span>
+    }
+
+    /**
+     * Imprison the given adventurer.
+     *
+     * @param adventurer the defeated adventurer
+     */
+    public void imprisonAdventurer(final Adventurer adventurer) {
+<span class="nc" id="L163">        this.prison.add(adventurer);</span>
+<span class="nc" id="L164">    }</span>
+
+    /**
+     * Free the first adventurer from prison.
+     *
+     * @return the freed adventurer
+     */
+    public Adventurer freeAdventurer() {
+<span class="nc" id="L172">        return this.prison.remove(0);</span>
+    }
+
+    /**
+     * Get all imprisoned adventurers.
+     *
+     * @return a list of imprisoned adventurers
+     */
+    public List&lt;Adventurer&gt; getPrison() {
+<span class="nc" id="L181">        return this.prison;</span>
+    }
+
+    /**
+     * Get the number of imprisoned adventurers.
+     *
+     * @return the number of imprisoned adventurers
+     */
+    public int getNumImprisonedAdventurers() {
+<span class="nc" id="L190">        return this.prison.size();</span>
+    }
+
+    /*added*/
+    public boolean linusIsPresent() {
+<span class="nc" id="L195">        return archmageLinus;</span>
+    }
+
+    public void setArchmageLinus(final boolean archmageLinus) {
+<span class="nc" id="L199">        this.archmageLinus = archmageLinus;</span>
+<span class="nc" id="L200">    }</span>
+
+    /**
+     * increase when linus arrive in the dungeon
+     */
+    public void increasePenguinVisit() {
+<span class="nc" id="L206">        penguinVisits++;</span>
+<span class="nc" id="L207">    }</span>
+
+    /**
+     * calculates the probability that linus arrives
+     *
+     * @param player the player that is fighting
+     * @param model  the model that represents the game
+     * @return true if linus can arrive , false if linus can't
+     */
+
+    public boolean probabilityLinusArrive(final Player player, final Model model) {
+<span class="nc" id="L218">        final Random random = model.getRandomObject();</span>
+<span class="nc" id="L219">        final int upperBound = 15 + model.getMaxYear();</span>
+<span class="nc" id="L220">        final int dieRolled = random.nextInt(upperBound);</span>
+<span class="nc" id="L221">        final int toCompare = player.getEvilness() + model.getYear();</span>
+
+<span class="nc bnc" id="L223" title="All 2 branches missed.">        return dieRolled &lt; toCompare;</span>
+
+    }
+
+    public int getPenguinVisits() {
+<span class="nc" id="L228">        return penguinVisits;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

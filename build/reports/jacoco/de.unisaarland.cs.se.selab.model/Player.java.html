@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Player.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.model</a> &gt; <span class="el_source">Player.java</span></div><h1>Player.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.model;
+
+import de.unisaarland.cs.se.selab.comm.BidType;
+import de.unisaarland.cs.se.selab.model.dungeon.Dungeon;
+import de.unisaarland.cs.se.selab.spells.Spell;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+
+/**
+ * This holds all player-related data.
+ */
+public class Player {
+
+    public static final int MIN_EVILNESS = 0;
+    public static final int MAX_EVILNESS = 15;
+
+    private final int id;
+    private final String name;
+    private final List&lt;Monster&gt; monsters;
+    private final List&lt;Trap&gt; traps;
+    private final Dungeon dungeon;
+    private final List&lt;Optional&lt;BidType&gt;&gt; bids;
+    private final List&lt;BidType&gt; lockedTypes;
+    private int evilness;
+    private int imps;
+    private int gold;
+    private int food;
+    private int numTunnelDigsAllowed;
+    private boolean alive;
+    private int scorePoints;
+    private final Map&lt;Integer, List&lt;Spell&gt;&gt; spellMap;
+    //represent the counterSpells
+    private int counterSpells;
+    // represents the spells countered
+    private int counteredSpells;
+    //represent the seasons where the room cannot be activated
+    private final List&lt;Integer&gt; noActivatingSeason;
+    //represent blocked options It is a map, of season to bidTypes
+    private final Map&lt;Integer, List&lt;BidType&gt;&gt; blockedOptionBySpell;
+    private int withstoodSpells;
+
+    public Player(final int id,
+                  final String name,
+                  final int initialFood,
+                  final int initialGold,
+                  final int initialImps,
+                  final int initialEvilness,
+<span class="fc" id="L52">                  final Dungeon dungeon) {</span>
+<span class="fc" id="L53">        this.id = id;</span>
+<span class="fc" id="L54">        this.name = name;</span>
+<span class="fc" id="L55">        this.monsters = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L56">        this.traps = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L57">        this.dungeon = dungeon;</span>
+<span class="fc" id="L58">        this.lockedTypes = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L59">        this.food = initialFood;</span>
+<span class="fc" id="L60">        this.gold = initialGold;</span>
+<span class="fc" id="L61">        this.imps = initialImps;</span>
+<span class="fc" id="L62">        this.evilness = initialEvilness;</span>
+<span class="fc" id="L63">        this.bids = new ArrayList&lt;&gt;(Model.BID_LIMIT);</span>
+<span class="fc" id="L64">        this.alive = true;</span>
+<span class="fc" id="L65">        spellMap = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L66">        noActivatingSeason = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L67">        blockedOptionBySpell = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L68">        this.counterSpells = 0;</span>
+<span class="fc" id="L69">        clearBidTypes();</span>
+<span class="fc" id="L70">    }</span>
+
+    public final int getId() {
+<span class="nc" id="L73">        return this.id;</span>
+    }
+
+    public final String getName() {
+<span class="nc" id="L77">        return this.name;</span>
+    }
+
+    /**
+     * Place a bid a player sent via a place bid command.
+     *
+     * @param type     the bid's type
+     * @param priority the bid's priority, i.e., whether it is the first, second, or third bid
+     * @return {@code true} if the bid could be placed or {@code false} if the bid or priority is
+     * not available
+     */
+    public final boolean placeBid(final BidType type, final int priority) {
+        // Bid priorities start at 1 but list indices start at 0, hence the -1
+<span class="nc bnc" id="L90" title="All 4 branches missed.">        if (this.bids.get(priority - 1).isEmpty() &amp;&amp; checkBidType(type)) {</span>
+<span class="nc" id="L91">            this.bids.set(priority - 1, Optional.of(type));</span>
+<span class="nc" id="L92">            return true;</span>
+        }
+<span class="nc" id="L94">        return false;</span>
+    }
+
+    /**
+     * Check whether the given bid type was already placed.
+     *
+     * @param type the bid type to check.
+     * @return whether the bid is still available for placing, or not
+     */
+    private boolean checkBidType(final BidType type) {
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        return getPlacedBidTypes().stream().noneMatch(placedBid -&gt; placedBid == type);</span>
+    }
+
+    /**
+     * Check whether the player is still alive and finished with bidding.
+     *
+     * @return whether the player is finished with bidding
+     */
+    public final boolean finishedBidding() {
+<span class="nc bnc" id="L113" title="All 4 branches missed.">        return isAlive() &amp;&amp; !hasToBid();</span>
+    }
+
+    /**
+     * Check whether the player still has to bid.
+     *
+     * @return whether the player still has to bid
+     */
+    public final boolean hasToBid() {
+<span class="nc bnc" id="L122" title="All 4 branches missed.">        return isAlive() &amp;&amp; getPlacedBidTypes().size() != Model.BID_LIMIT;</span>
+    }
+
+    /**
+     * Get all placed bid types for this player.
+     *
+     * @return the list of placed bid types
+     */
+    public final List&lt;BidType&gt; getPlacedBidTypes() {
+<span class="nc" id="L131">        return this.bids.stream()</span>
+<span class="nc" id="L132">                .filter(Optional::isPresent)</span>
+<span class="nc" id="L133">                .map(Optional::get)</span>
+<span class="nc" id="L134">                .toList();</span>
+    }
+
+    /**
+     * Clear the list of placed bids.
+     */
+    public final void clearBidTypes() {
+<span class="fc" id="L141">        this.bids.clear();</span>
+<span class="fc bfc" id="L142" title="All 2 branches covered.">        for (int i = 0; i &lt; Model.BID_LIMIT; i++) {</span>
+<span class="fc" id="L143">            this.bids.add(Optional.empty());</span>
+        }
+<span class="fc" id="L145">    }</span>
+
+    /**
+     * Lock the bids of second and third priority.
+     */
+    public final void lockBidTypes() {
+        // Bid priorities start at 1 but list indices start at 0, hence the off-by-one
+<span class="nc" id="L152">        this.bids.get(1).ifPresent(this.lockedTypes::add);</span>
+<span class="nc" id="L153">        this.bids.get(2).ifPresent(this.lockedTypes::add);</span>
+<span class="nc" id="L154">    }</span>
+
+    /**
+     * Unlock previously locked bid types.
+     */
+    public final void unlockBidTypes() {
+<span class="nc" id="L160">        this.lockedTypes.clear();</span>
+<span class="nc" id="L161">    }</span>
+
+    /**
+     * Check whether the given bid type is locked.
+     *
+     * @param type   the bid type to check
+     * @param season the season of bidding
+     * @return whether the bid type is locked
+     */
+    public final boolean isLocked(final BidType type, final int season) {
+<span class="pc bpc" id="L171" title="1 of 2 branches missed.">        if (!blockedOptionBySpell.containsKey(season)) {</span>
+<span class="nc" id="L172">            return this.lockedTypes.contains(type);</span>
+        }
+<span class="fc" id="L174">        final List&lt;BidType&gt; blockList = blockedOptionBySpell.get(season);</span>
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">        return this.lockedTypes.contains(type)</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">                || blockList.contains(type);</span>
+    }
+
+    /**
+     * Get a list of currently locked bid types.
+     *
+     * @return the list of locked bid types
+     */
+    public final List&lt;BidType&gt; getLockedTypes() {
+<span class="nc" id="L185">        return this.lockedTypes;</span>
+    }
+
+    public int getEvilness() {
+<span class="nc" id="L189">        return this.evilness;</span>
+    }
+
+    public void changeEvilness(final int evilness) {
+<span class="nc" id="L193">        this.evilness += evilness;</span>
+<span class="nc" id="L194">    }</span>
+
+    public int getImps() {
+<span class="nc" id="L197">        return this.imps;</span>
+    }
+
+    public void changeImps(final int imps) {
+<span class="nc" id="L201">        this.imps += imps;</span>
+<span class="nc" id="L202">    }</span>
+
+    public int getGold() {
+<span class="nc" id="L205">        return this.gold;</span>
+    }
+
+    public void changeGold(final int gold) {
+<span class="nc" id="L209">        this.gold += gold;</span>
+<span class="nc" id="L210">    }</span>
+
+    public int getFood() {
+<span class="nc" id="L213">        return this.food;</span>
+    }
+
+    public void changeFood(final int food) {
+<span class="nc" id="L217">        this.food += food;</span>
+<span class="nc" id="L218">    }</span>
+
+    public final List&lt;Monster&gt; getMonsters() {
+<span class="nc" id="L221">        return this.monsters;</span>
+    }
+
+    public final Optional&lt;Monster&gt; getMonster(final int monsterId) {
+<span class="nc" id="L225">        return this.monsters.stream()</span>
+<span class="nc bnc" id="L226" title="All 2 branches missed.">                .filter(monster -&gt; monster.getId() == monsterId)</span>
+<span class="nc" id="L227">                .findFirst();</span>
+    }
+
+    /**
+     * Make all monsters available for being set on defense again.
+     */
+    public final void wakeUpMonsters() {
+<span class="nc" id="L234">        this.monsters.forEach(monster -&gt; monster.setUsed(false));</span>
+<span class="nc" id="L235">    }</span>
+
+    public final void addMonster(final Monster monster) {
+<span class="nc" id="L238">        this.monsters.add(monster);</span>
+<span class="nc" id="L239">    }</span>
+
+    public List&lt;Trap&gt; getTraps() {
+<span class="nc" id="L242">        return this.traps;</span>
+    }
+
+    public final Optional&lt;Trap&gt; getTrap(final int trapId) {
+<span class="nc" id="L246">        return this.traps.stream()</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">                .filter(trap -&gt; trap.getId() == trapId)</span>
+<span class="nc" id="L248">                .findFirst();</span>
+    }
+
+    public void addTrap(final Trap trap) {
+<span class="nc" id="L252">        this.traps.add(trap);</span>
+<span class="nc" id="L253">    }</span>
+
+    /**
+     * Set the number of tunnels the player is allowed to dig.
+     *
+     * @param numTunnelDigsAllowed the number of tunnels a player may dig
+     */
+    public final void setNumTunnelDigsAllowed(final int numTunnelDigsAllowed) {
+<span class="nc" id="L261">        this.numTunnelDigsAllowed = numTunnelDigsAllowed;</span>
+<span class="nc" id="L262">    }</span>
+
+    /**
+     * Get the number of tunnels the player is allowed to dig.
+     *
+     * @return the number of tunnels a player may dig
+     */
+    public final int getNumTunnelDigsAllowed() {
+<span class="nc" id="L270">        return this.numTunnelDigsAllowed;</span>
+    }
+
+    /**
+     * Reduces the number of tunnels the player is allowed to dig by 1.
+     */
+    public final void digTunnel() {
+<span class="nc" id="L277">        this.numTunnelDigsAllowed--;</span>
+<span class="nc" id="L278">    }</span>
+
+    public final Dungeon getDungeon() {
+<span class="nc" id="L281">        return this.dungeon;</span>
+    }
+
+    /**
+     * Indicate that this player has left the game.
+     */
+    public void kill() {
+<span class="nc" id="L288">        this.alive = false;</span>
+<span class="nc" id="L289">    }</span>
+
+    /**
+     * Check whether this player still participates in the game.
+     *
+     * @return whether this player still participates in the game
+     */
+    public boolean isAlive() {
+<span class="nc" id="L297">        return this.alive;</span>
+    }
+
+    public int getScorePoints() {
+<span class="nc" id="L301">        return this.scorePoints;</span>
+    }
+
+    public void changeScorePoints(final int amount) {
+<span class="nc" id="L305">        this.scorePoints += amount;</span>
+<span class="nc" id="L306">    }</span>
+
+    /* Added functions */
+
+    public void increaseCounterSpell() {
+<span class="nc" id="L311">        counterSpells++;</span>
+<span class="nc" id="L312">    }</span>
+
+    public void useCounterSpell() {
+<span class="nc" id="L315">        counterSpells--;</span>
+<span class="nc" id="L316">        counteredSpells++;</span>
+<span class="nc" id="L317">    }</span>
+
+    /**
+     * This function assigns the spells to the lord, who triggered them.
+     *
+     * @param season           the season, in which it was triggered
+     * @param spellToWithstand the spell triggered
+     */
+
+    public void addSpell(final int season, final Spell spellToWithstand) {
+<span class="fc" id="L327">        final List&lt;Spell&gt; listSpell = this.spellMap.getOrDefault(season, new ArrayList&lt;&gt;());</span>
+<span class="fc" id="L328">        listSpell.add(spellToWithstand);</span>
+<span class="fc" id="L329">        this.spellMap.put(season, listSpell);</span>
+<span class="fc" id="L330">    }</span>
+
+    public int reduceFood(final int amount) {
+<span class="nc bnc" id="L333" title="All 2 branches missed.">        if (this.food - amount &lt; 0) {</span>
+<span class="nc" id="L334">            final int amountReduced = this.food;</span>
+<span class="nc" id="L335">            this.food = 0;</span>
+<span class="nc" id="L336">            return amountReduced;</span>
+        } else {
+<span class="nc" id="L338">            food -= amount;</span>
+<span class="nc" id="L339">            return amount;</span>
+        }
+    }
+
+    public int reduceGold(final int amount) {
+<span class="nc bnc" id="L344" title="All 2 branches missed.">        if (this.gold - amount &lt; 0) {</span>
+<span class="nc" id="L345">            final int amountReduced = this.gold;</span>
+<span class="nc" id="L346">            this.gold = 0;</span>
+<span class="nc" id="L347">            return amountReduced;</span>
+        } else {
+<span class="nc" id="L349">            gold -= amount;</span>
+<span class="nc" id="L350">            return amount;</span>
+        }
+    }
+
+    /**
+     * block a bidType by the structural spell
+     *
+     * @param bidType bidType to block
+     * @param season  represents the season, in which it should be blocked
+     */
+    public void blockOptionBySpell(final BidType bidType, final int season) {
+        /* if(lockedTypes.contains(bidType)){
+            return false;
+        } to ask */
+<span class="fc" id="L364">        final List&lt;BidType&gt; blockedOptions =</span>
+<span class="fc" id="L365">                blockedOptionBySpell.getOrDefault(season, new ArrayList&lt;&gt;());</span>
+        //if not blocked
+<span class="fc bfc" id="L367" title="All 2 branches covered.">        if (blockedOptions.isEmpty()) {</span>
+<span class="fc" id="L368">            blockedOptions.add(bidType);</span>
+<span class="fc" id="L369">            blockedOptionBySpell.put(season, blockedOptions);</span>
+
+            //if season is present but list does not contain the bidType
+<span class="pc bpc" id="L372" title="1 of 2 branches missed.">        } else if (!blockedOptions.contains(bidType)) {</span>
+<span class="fc" id="L373">            blockedOptions.add(bidType);</span>
+<span class="fc" id="L374">            blockedOptionBySpell.put(season, blockedOptions);</span>
+
+        }
+
+
+<span class="fc" id="L379">    }</span>
+
+    /**
+     * block a bidType by the structural spell
+     *
+     * @param bidType bidType to block
+     * @param season  represents the season, in which it should be blocked
+     * @return true if the blocking is possible
+     */
+
+    public boolean canBlockBid(final BidType bidType, final int season) {
+<span class="fc" id="L390">        final List&lt;BidType&gt; blockedOptions =</span>
+<span class="fc" id="L391">                blockedOptionBySpell.getOrDefault(season, new ArrayList&lt;&gt;());</span>
+<span class="fc bfc" id="L392" title="All 2 branches covered.">        return !blockedOptions.contains(bidType);</span>
+    }
+
+    /**
+     * cleans up the list of block options by spells and
+     * cleans the list of seasons, in which the player can't activate a room
+     */
+    public void buildingEnd() {
+<span class="nc" id="L400">        removeAllBlockOptionBySpell();</span>
+<span class="nc" id="L401">        noActivatingSeason.clear();</span>
+<span class="nc" id="L402">    }</span>
+
+    public void removeAllBlockOptionBySpell() {
+<span class="nc" id="L405">        blockedOptionBySpell.clear();</span>
+<span class="nc" id="L406">    }</span>
+
+    public List&lt;Integer&gt; getNoActivatingSeasonList() {
+<span class="nc" id="L409">        return noActivatingSeason;</span>
+    }
+
+    public int getCounterSpells() {
+<span class="nc" id="L413">        return counterSpells;</span>
+    }
+
+    public int getCounteredSpells() {
+<span class="nc" id="L417">        return counteredSpells;</span>
+    }
+
+    /**
+     * describes the spells that have to be withstood
+     *
+     * @param round the round, in which the spell has to be withstood
+     * @return returns a list of spells which have to be withstood in this round
+     */
+
+    public List&lt;Spell&gt; spellsToWithstand(final int round) {
+<span class="fc" id="L428">        return this.spellMap.remove(round);</span>
+    }
+
+    public void removeAllSpellsToWithstand() {
+<span class="nc" id="L432">        this.spellMap.clear();</span>
+<span class="nc" id="L433">    }</span>
+
+    public boolean roundSpellsPresent(final int round) {
+<span class="nc" id="L436">        return this.spellMap.containsKey(round);</span>
+    }
+
+    public void increaseWithstoodSpell() {
+<span class="nc" id="L440">        withstoodSpells++;</span>
+<span class="nc" id="L441">    }</span>
+
+    public int getWithstoodSpells() {
+<span class="nc" id="L444">        return withstoodSpells;</span>
+    }
+
+    public Map&lt;Integer, List&lt;BidType&gt;&gt; getBlockedOptionBySpell() {
+<span class="nc" id="L448">        return blockedOptionBySpell;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

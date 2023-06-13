@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Coordinate.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.model.dungeon</a> &gt; <span class="el_source">Coordinate.java</span></div><h1>Coordinate.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.model.dungeon;
+
+import java.util.Arrays;
+import java.util.List;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * A simple 2-dimensional coordinate.
+ *
+ * @param posX the coordinate's horizontal position
+ * @param posY the coordinate's vertical position
+ */
+<span class="fc" id="L13">public record Coordinate(int posX, int posY) {</span>
+
+<span class="fc" id="L15">    public enum Direction {</span>
+<span class="fc" id="L16">        NORTH,</span>
+<span class="fc" id="L17">        EAST,</span>
+<span class="fc" id="L18">        SOUTH,</span>
+<span class="fc" id="L19">        WEST,</span>
+
+    }
+
+    /**
+     * Get the neighbouring coordinate in the given direction.
+     *
+     * @param direction the direction of the neighbor
+     * @return the neighbouring coordinate
+     */
+    @NotNull
+    public Coordinate getNeighbor(final Direction direction) {
+<span class="pc bpc" id="L31" title="1 of 5 branches missed.">        return switch (direction) {</span>
+<span class="fc" id="L32">            case EAST  -&gt; new Coordinate(posX() + 1, posY());</span>
+<span class="fc" id="L33">            case NORTH -&gt; new Coordinate(posX(), posY() - 1);</span>
+<span class="fc" id="L34">            case SOUTH -&gt; new Coordinate(posX(), posY() + 1);</span>
+<span class="fc" id="L35">            case WEST  -&gt; new Coordinate(posX() - 1, posY());</span>
+        };
+    }
+
+    /**
+     * Get a list of neighbouring coordinates.
+     *
+     * @return a list of neighbouring coordinates
+     */
+    public List&lt;Coordinate&gt; getNeighbours() {
+<span class="fc" id="L45">        return Arrays.stream(Direction.values()).map(this::getNeighbor).toList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

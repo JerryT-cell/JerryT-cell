@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Command.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.commands</a> &gt; <span class="el_source">Command.java</span></div><h1>Command.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.commands;
+
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.state.State;
+import java.util.Set;
+
+/**
+ * Superclass for all commands/actions.
+ */
+public abstract class Command {
+
+    private final int playerId;
+
+    /**
+     * Create a new command that was sent by the player with the given player ID.
+     *
+     * @param playerId the player's player ID
+     */
+<span class="nc" id="L21">    public Command(final int playerId) {</span>
+<span class="nc" id="L22">        this.playerId = playerId;</span>
+<span class="nc" id="L23">    }</span>
+
+    /**
+     * Returns a set of game phases in which this command is valid, i.e., may be executed.
+     *
+     * @return the set of game phases
+     */
+    public Set&lt;State.Phase&gt; inPhase() {
+<span class="nc" id="L31">        return Set.of(State.Phase.values());</span>
+    }
+
+    /**
+     * Execute a player command/action.
+     * &lt;p&gt;
+     * Certain commands/actions are executed for a single player individually.
+     * This version of the {@code execute()} function takes that player as an additional parameter.
+     * The default behavior is the same as
+     * {@link Command#execute(Model, ConnectionWrapper, State.Phase)}.
+     * However, the {@link PlayerCommand} overrides this function to check whether it is the given
+     * player's turn.
+     * &lt;/p&gt;
+     *
+     * @param model      the model to which the action based changes should apply
+     * @param connection the connection to the client to transmit events
+     * @param phase      the game phase in which this command/action was triggered
+     * @param player     the current player for this action
+     * @return a result that indicates how the game should continue
+     * @see PlayerCommand
+     */
+    public ActionResult execute(final Model model, final ConnectionWrapper connection,
+                                final State.Phase phase, final Player player) {
+<span class="nc" id="L54">        return execute(model, connection, phase);</span>
+    }
+
+    /**
+     * Execute a command/action.
+     * &lt;p&gt;
+     * This method implements some general checks, e.g., whether this command may be executed in the
+     * current game phase.
+     * If the checks succeed, this method calls {@link Command#run(Model, ConnectionWrapper)}.
+     * So, for most commands it suffices to override the {@code run() function}.
+     * &lt;/p&gt;
+     *
+     * @param model      the model to which the action based changes should apply
+     * @param connection the connection to the client to transmit events
+     * @param phase      the game phase in which this command/action was triggered
+     * @return a result that indicates how the game should continue
+     */
+    public ActionResult execute(final Model model, final ConnectionWrapper connection,
+                                final State.Phase phase) {
+<span class="nc bnc" id="L73" title="All 2 branches missed.">        if (inPhase().contains(phase)) {</span>
+<span class="nc" id="L74">            return this.run(model, connection);</span>
+        }
+<span class="nc" id="L76">        connection.sendActionFailed(getId(), &quot;This action is not applicable now.&quot;);</span>
+<span class="nc" id="L77">        return ActionResult.RETRY;</span>
+    }
+
+    /**
+     * This function is called when a command/action is executed.
+     *
+     * @param model      the model to which the action based changes should apply
+     * @param connection the connection to the client to transmit events
+     * @return a result that indicates how the game should continue
+     */
+    protected abstract ActionResult run(Model model, ConnectionWrapper connection);
+
+    /**
+     * Get the player ID of the player who sent this command/action.
+     *
+     * @return the sender's player ID
+     */
+    public final int getId() {
+<span class="nc" id="L95">        return this.playerId;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

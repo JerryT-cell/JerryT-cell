@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Spell.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.spells</a> &gt; <span class="el_source">Spell.java</span></div><h1>Spell.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.spells;
+
+import de.unisaarland.cs.se.selab.ConnectionUtils;
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.comm.BidType;
+import de.unisaarland.cs.se.selab.commands.ActionResult;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.state.State;
+
+/**
+ * Super class for all spells
+ */
+public abstract class Spell {
+
+    protected final int id;
+    protected final SpellType spellType;
+    protected final BidType bidType;
+    protected final int slot;
+    protected int magicPointsNeeded;
+
+    /**
+     * create a new spell in general
+     *
+     * @param id        id of the spell
+     * @param spellType what kind of spell it represents
+     * @param bidType   the bidType of the triggering
+     * @param slot      the specific slot
+     */
+
+<span class="fc" id="L31">    public Spell(final int id, final SpellType spellType, final BidType bidType, final int slot) {</span>
+<span class="fc" id="L32">        this.id = id;</span>
+<span class="fc" id="L33">        this.spellType = spellType;</span>
+<span class="fc" id="L34">        this.bidType = bidType;</span>
+<span class="fc" id="L35">        this.slot = slot;</span>
+<span class="fc" id="L36">    }</span>
+
+    /**
+     * this method describes the algorithm of casting a spell. It will be overwritten
+     * by every spell subclasses.
+     *
+     * @param playerId the player It is going to affect
+     * @param model    the model, on which changes are based.
+     * @param wrapper  the wrapper, for sending events
+     * @return the result that indicates how the game should proceed
+     */
+    public ActionResult cast(final int playerId, final Model model,
+                             final ConnectionWrapper wrapper) {
+<span class="nc" id="L49">        final Player player = model.getPlayerById(playerId);</span>
+<span class="nc" id="L50">        final boolean result = castAndCounterSpell(player, model, wrapper);</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if (model.getPlayers().isEmpty()) { //if all players left during the command &quot;counter spell&quot;</span>
+<span class="nc" id="L52">            return ActionResult.END_GAME;</span>
+<span class="nc bnc" id="L53" title="All 4 branches missed.">        } else if (!result &amp;&amp; player.isAlive()) { //if player sends an endTurn and player is there:</span>
+<span class="nc" id="L54">            cast(player, model, wrapper);</span>
+        }
+
+<span class="nc" id="L57">        return ActionResult.PROCEED;</span>
+
+    }
+
+    protected abstract void cast(Player player, Model model, ConnectionWrapper wrapper);
+
+    public int getId() {
+<span class="fc" id="L64">        return id;</span>
+    }
+
+    public SpellType getSpellType() {
+<span class="fc" id="L68">        return spellType;</span>
+    }
+
+    public BidType getBidType() {
+<span class="fc" id="L72">        return bidType;</span>
+    }
+
+    public int getSlot() {
+<span class="fc" id="L76">        return slot;</span>
+    }
+
+    public int getMagicPointsNeeded() {
+<span class="nc" id="L80">        return magicPointsNeeded;</span>
+    }
+
+    /**
+     * sends the castSpell event and
+     * handle the counter spells if present
+     *
+     * @param player  the player fighting
+     * @param model   the model used
+     * @param wrapper the wrapper connection
+     * @return true if player used the counter spell and false if there's an endTurn
+     * or player left
+     */
+
+    protected boolean castAndCounterSpell(final Player player, final Model model,
+                                          final ConnectionWrapper wrapper) {
+<span class="nc" id="L96">        wrapper.sendSpellCast(id, player.getId());</span>
+<span class="nc" id="L97">        player.increaseWithstoodSpell();</span>
+<span class="nc" id="L98">        boolean result = false;</span>
+<span class="nc" id="L99">        final int initialCounterSpells = player.getCounterSpells();</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        if (player.getCounterSpells() &gt; 0) {</span>
+<span class="nc" id="L101">            wrapper.sendCounterSpell(player.getId());</span>
+<span class="nc" id="L102">            ConnectionUtils.executePlayerCommand(model, wrapper, State.Phase.SPELL,</span>
+                    player);
+<span class="nc bnc" id="L104" title="All 4 branches missed.">            result = player.isAlive() &amp;&amp; player.getCounterSpells() &lt; initialCounterSpells;</span>
+        }
+<span class="nc" id="L106">        return result;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

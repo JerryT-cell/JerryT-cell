@@ -1,0 +1,416 @@
+{
+  "maxPlayers": 2,
+  "years": 1,
+  "dungeonSideLength": 5,
+  "initialFood": 3,
+  "initialGold": 3,
+  "initialImps": 3,
+  "monsters": [
+    {
+      "id": 0,
+      "name": "Ghost",
+      "hunger": 1,
+      "evilness": 1,
+      "damage": 2,
+      "attackStrategy": "BASIC"
+    },
+    {
+      "id": 1,
+      "name": "Ork",
+      "evilness": 3,
+      "damage": 1,
+      "attackStrategy": "BASIC"
+    },
+    {
+      "id": 2,
+      "name": "Daemon",
+      "hunger": 2,
+      "damage": 1,
+      "attackStrategy": "TARGETED"
+    },
+    {
+      "id": 3,
+      "name": "Golem",
+      "hunger": 2,
+      "evilness": 1,
+      "damage": 3,
+      "attackStrategy": "BASIC"
+    },
+    {
+      "id": 4,
+      "name": "Ghost",
+      "hunger": 3,
+      "damage": 3,
+      "attackStrategy": "TARGETED"
+    },
+    {
+      "id": 5,
+      "name": "Daemon",
+      "hunger": 1,
+      "evilness": 1,
+      "damage": 3,
+      "attackStrategy": "TARGETED"
+    },
+    {
+      "id": 6,
+      "name": "Ork",
+      "hunger": 1,
+      "evilness": 1,
+      "damage": 2,
+      "attackStrategy": "BASIC"
+    },
+    {
+      "id": 7,
+      "name": "Golem",
+      "damage": 1,
+      "attackStrategy": "MULTI"
+    },
+    {
+      "id": 8,
+      "name": "Ork",
+      "hunger": 1,
+      "evilness": 1,
+      "damage": 2,
+      "attackStrategy": "BASIC"
+    },
+    {
+      "id": 9,
+      "name": "Ghost",
+      "evilness": 3,
+      "damage": 2,
+      "attackStrategy": "MULTI"
+    },
+    {
+      "id": 10,
+      "name": "Golem",
+      "hunger": 2,
+      "damage": 1,
+      "attackStrategy": "TARGETED"
+    },
+    {
+      "id": 11,
+      "name": "Daemon",
+      "hunger": 2,
+      "evilness": 1,
+      "damage": 1,
+      "attackStrategy": "BASIC"
+    }
+  ],
+  "adventurers": [
+    {
+      "id": 0,
+      "name": "Maxi",
+      "difficulty": 1,
+      "healthPoints": 3,
+      "charge": true,
+      "magicPoints": 1
+    },
+    {
+      "id": 1,
+      "name": "Leo",
+      "difficulty": 2,
+      "healthPoints": 3,
+      "healValue": 1,
+      "magicPoints": 2
+    },
+    {
+      "id": 2,
+      "name": "Julia",
+      "difficulty": 3,
+      "healthPoints": 4,
+      "defuseValue": 1,
+      "magicPoints": 2
+    },
+    {
+      "id": 3,
+      "name": "Niklas",
+      "difficulty": 4,
+      "healthPoints": 4,
+      "healValue": 2,
+      "charge": false
+    },
+    {
+      "id": 4,
+      "name": "Simon",
+      "difficulty": 5,
+      "healthPoints": 5,
+      "defuseValue": 0,
+      "charge": true,
+      "magicPoints": 2
+    },
+    {
+      "id": 5,
+      "name": "Youssef",
+      "difficulty": 6,
+      "healthPoints": 5,
+      "healValue": 2,
+      "defuseValue": 0
+    },
+    {
+      "id": 6,
+      "name": "Julian",
+      "difficulty": 7,
+      "healthPoints": 6,
+      "healValue": 2,
+      "defuseValue": 2,
+      "charge": true,
+      "magicPoints": 3
+    },
+    {
+      "id": 7,
+      "name": "Lauritz",
+      "difficulty": 8,
+      "healthPoints": 6,
+      "healValue": 3,
+      "charge": false,
+      "magicPoints": 2
+    }
+  ],
+  "traps": [
+    {
+      "id": 0,
+      "name": "Poison Trap",
+      "attackStrategy": "BASIC",
+      "damage": 3
+    },
+    {
+      "id": 1,
+      "name": "Poison Trap",
+      "attackStrategy": "BASIC",
+      "damage": 3
+    },
+    {
+      "id": 2,
+      "name": "Poison Trap",
+      "attackStrategy": "BASIC",
+      "damage": 3
+    },
+    {
+      "id": 3,
+      "name": "Poison Trap",
+      "attackStrategy": "BASIC",
+      "damage": 2
+    },
+    {
+      "id": 4,
+      "name": "Dynamite",
+      "attackStrategy": "MULTI",
+      "damage": 1
+    },
+    {
+      "id": 5,
+      "name": "Dynamite",
+      "attackStrategy": "MULTI",
+      "damage": 1
+    },
+    {
+      "id": 6,
+      "name": "Dynamite",
+      "attackStrategy": "MULTI",
+      "damage": 1
+    },
+    {
+      "id": 7,
+      "name": "Dynamite",
+      "attackStrategy": "MULTI",
+      "damage": 1
+    },
+    {
+      "id": 8,
+      "name": "Blizzard",
+      "attackStrategy": "TARGETED",
+      "damage": 2,
+      "target": 1
+    },
+    {
+      "id": 9,
+      "name": "Blizzard",
+      "attackStrategy": "TARGETED",
+      "damage": 2,
+      "target": 1
+    },
+    {
+      "id": 10,
+      "name": "Blizzard",
+      "attackStrategy": "TARGETED",
+      "damage": 2,
+      "target": 1
+    },
+    {
+      "id": 11,
+      "name": "Blizzard",
+      "attackStrategy": "TARGETED",
+      "damage": 2,
+      "target": 1
+    },
+    {
+      "id": 12,
+      "name": "Exodia's Curse",
+      "attackStrategy": "BASIC",
+      "damage": 2
+    },
+    {
+      "id": 13,
+      "name": "Exodia's Curse",
+      "attackStrategy": "BASIC",
+      "damage": 2
+    },
+    {
+      "id": 14,
+      "name": "Exodia's Curse",
+      "attackStrategy": "BASIC",
+      "damage": 2
+    },
+    {
+      "id": 15,
+      "name": "Exodia's Curse",
+      "attackStrategy": "BASIC",
+      "damage": 4
+    }
+  ],
+  "rooms": [
+    {
+      "id": 0,
+      "name": "Mint",
+      "restriction": "LOWER_HALF",
+      "activation": 3,
+      "gold": 1
+    },
+    {
+      "id": 1,
+      "name": "Chicken Coop",
+      "restriction": "UPPER_HALF",
+      "activation": 2,
+      "food": 1
+    },
+    {
+      "id": 2,
+      "name": "Workshop",
+      "restriction": "OUTER_RING",
+      "activation": 4,
+      "gold": 1,
+      "niceness": 1
+    },
+    {
+      "id": 3,
+      "name": "Layla's Dungeon",
+      "restriction": "LOWER_HALF",
+      "activation": 3,
+      "imps": 1
+    },
+    {
+      "id": 4,
+      "name": "Printing Press",
+      "restriction": "INNER_RING",
+      "activation": 3,
+      "niceness": 1
+    },
+    {
+      "id": 5,
+      "name": "Mint",
+      "restriction": "LOWER_HALF",
+      "activation": 3,
+      "gold": 1
+    },
+    {
+      "id": 6,
+      "name": "Chicken Coop",
+      "restriction": "UPPER_HALF",
+      "activation": 2,
+      "food": 1
+    },
+    {
+      "id": 7,
+      "name": "Workshop",
+      "restriction": "OUTER_RING",
+      "activation": 4,
+      "gold": 1,
+      "niceness": 1
+    }
+  ],
+  "spells": [
+    {
+      "id": 0,
+      "spellType": "RESOURCE",
+      "bidType": "GOLD",
+      "slot": 1,
+      "gold": 1
+    },
+    {
+      "id": 1,
+      "spellType": "STRUCTURE",
+      "bidType": "TUNNEL",
+      "slot": 1,
+      "structureEffect": "CONQUER"
+    },
+    {
+      "id": 2,
+      "spellType": "RESOURCE",
+      "bidType": "FOOD",
+      "slot": 2,
+      "gold": 1
+    },
+    {
+      "id": 3,
+      "spellType": "RESOURCE",
+      "bidType": "FOOD",
+      "slot": 1,
+      "food": 9,
+      "gold": 9
+    },
+    {
+      "id": 4,
+      "spellType": "ROOM",
+      "bidType": "IMPS",
+      "slot": 1
+    },
+    {
+      "id": 5,
+      "spellType": "STRUCTURE",
+      "bidType": "NICENESS",
+      "slot": 1,
+      "structureEffect": "DESTROY"
+    },
+    {
+      "id": 6,
+      "spellType": "ROOM",
+      "bidType": "GOLD",
+      "slot": 1
+    },
+    {
+      "id": 7,
+      "spellType": "BUFF",
+      "bidType": "MONSTER",
+      "slot": 1,
+      "healValue": 2
+    },
+    {
+      "id": 8,
+      "spellType": "STRUCTURE",
+      "bidType": "TRAP",
+      "slot": 1,
+      "structureEffect": "CONQUER"
+    },
+    {
+      "id": 9,
+      "spellType": "BIDDING",
+      "bidType": "NICENESS",
+      "slot": 1,
+      "bidTypeBlocked": "FOOD"
+    },
+    {
+      "id": 10,
+      "spellType": "BIDDING",
+      "bidType": "MONSTER",
+      "slot": 1,
+      "bidTypeBlocked": "MONSTER"
+    },
+    {
+      "id": 11,
+      "spellType": "BIDDING",
+      "bidType": "NICENESS",
+      "slot": 1,
+      "bidTypeBlocked": "FOOD"
+    }
+  ]
+}

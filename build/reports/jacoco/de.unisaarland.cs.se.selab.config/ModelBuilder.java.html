@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ModelBuilder.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.config</a> &gt; <span class="el_source">ModelBuilder.java</span></div><h1>ModelBuilder.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.config;
+
+import de.unisaarland.cs.se.selab.comm.BidType;
+import de.unisaarland.cs.se.selab.model.Adventurer;
+import de.unisaarland.cs.se.selab.model.AttackStrategy;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Monster;
+import de.unisaarland.cs.se.selab.model.Trap;
+import de.unisaarland.cs.se.selab.model.dungeon.Room;
+import de.unisaarland.cs.se.selab.spells.BiddingSpell;
+import de.unisaarland.cs.se.selab.spells.BuffSpell;
+import de.unisaarland.cs.se.selab.spells.ResourceSpell;
+import de.unisaarland.cs.se.selab.spells.RoomSpell;
+import de.unisaarland.cs.se.selab.spells.Spell;
+import de.unisaarland.cs.se.selab.spells.SpellType;
+import de.unisaarland.cs.se.selab.spells.StructuralSpell;
+import de.unisaarland.cs.se.selab.spells.StructureEffect;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+
+/**
+ * The model builder collects all the data from the parsed config file and creates the model when
+ * {@link ModelBuilder#build()} is called.
+ */
+public class ModelBuilder implements ModelBuilderInterface&lt;Model&gt; {
+
+    private final List&lt;Adventurer&gt; adventurers;
+    private final List&lt;Monster&gt; monsters;
+    private final List&lt;Trap&gt; traps;
+    private final List&lt;Room&gt; rooms;
+    private final List&lt;Spell&gt; spells;
+    private int maxPlayers;
+    private long randomSeed;
+    private int years;
+    private int dungeonSideLength;
+    private int initialFood;
+    private int initialGold;
+    private int initialImps;
+    private int initialEvilness;
+
+<span class="fc" id="L42">    public ModelBuilder() {</span>
+<span class="fc" id="L43">        this.adventurers = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L44">        this.monsters = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L45">        this.traps = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L46">        this.rooms = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L47">        this.spells = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L48">    }</span>
+
+    @Override
+    public void addMonster(final int id, final int hunger, final int damage, final int evilness,
+                           final String attack) {
+<span class="fc" id="L53">        this.monsters.add(</span>
+<span class="fc" id="L54">                new Monster(id, hunger, damage, evilness, AttackStrategy.valueOf(attack)));</span>
+<span class="fc" id="L55">    }</span>
+
+    @Override
+    public void addAdventurer(final int id, final int difficulty, final int healthPoints,
+                              final int healValue, final int defuseValue, final boolean charge,
+                              final int magicPoints) {
+<span class="fc" id="L61">        this.adventurers.add(</span>
+                new Adventurer(id, difficulty, healthPoints, healValue, defuseValue, charge,
+                        magicPoints));
+<span class="fc" id="L64">    }</span>
+
+    @Override
+    public void addTrap(final int id, final String attack, final int damage) {
+<span class="fc" id="L68">        this.traps.add(new Trap(id, AttackStrategy.valueOf(attack), damage));</span>
+<span class="fc" id="L69">    }</span>
+
+    @Override
+    public void addTrap(final int id, final String attack, final int damage, final int target) {
+<span class="fc" id="L73">        this.traps.add(new Trap(id, AttackStrategy.valueOf(attack), damage, target));</span>
+<span class="fc" id="L74">    }</span>
+
+    @Override
+    public void addRoom(final int id, final int activation, final String restriction,
+                        final int food, final int gold, final int imps, final int niceness) {
+<span class="fc" id="L79">        final EnumMap&lt;BidType, Integer&gt; production = new EnumMap&lt;&gt;(BidType.class);</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        if (food &gt; 0) {</span>
+<span class="fc" id="L81">            production.put(BidType.FOOD, food);</span>
+        }
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (gold &gt; 0) {</span>
+<span class="fc" id="L84">            production.put(BidType.GOLD, gold);</span>
+        }
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        if (imps &gt; 0) {</span>
+<span class="fc" id="L87">            production.put(BidType.IMPS, imps);</span>
+        }
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        if (niceness &gt; 0) {</span>
+<span class="fc" id="L90">            production.put(BidType.NICENESS, niceness);</span>
+        }
+<span class="fc" id="L92">        this.rooms.add(new Room(id, activation, Room.BuildingRestriction.valueOf(restriction),</span>
+                production));
+<span class="fc" id="L94">    }</span>
+
+    @Override
+    public void addResourceSpell(final int id, final String spellType, final String bidType,
+                                 final int slot, final int food,
+                                 final int gold, final boolean other) {
+<span class="fc" id="L100">        this.spells.add(new ResourceSpell(id, SpellType.valueOf(spellType),</span>
+<span class="fc" id="L101">                BidType.valueOf(bidType), slot, food, gold));</span>
+
+<span class="fc" id="L103">    }</span>
+
+    @Override
+    public void addBuffSpell(final int id, final String spellType, final String bidType,
+                             final int slot, final int healthPoints,
+                             final int defuseValue, final int healValue, final boolean other) {
+<span class="fc" id="L109">        this.spells.add(new BuffSpell(id, SpellType.valueOf(spellType),</span>
+<span class="fc" id="L110">                BidType.valueOf(bidType), slot, healthPoints, defuseValue, healValue));</span>
+
+<span class="fc" id="L112">    }</span>
+
+    @Override
+    public void addRoomSpell(final int id, final String spellType, final String bidType,
+                             final int slot, final boolean other) {
+<span class="fc" id="L117">        this.spells.add(new RoomSpell(id, SpellType.valueOf(spellType),</span>
+<span class="fc" id="L118">                BidType.valueOf(bidType), slot));</span>
+
+<span class="fc" id="L120">    }</span>
+
+    @Override
+    public void addBiddingSpell(final int id, final String spellType, final String bidType,
+                                final int slot,
+                                final String bidTypeBlocked, final boolean other) {
+<span class="fc" id="L126">        this.spells.add(new BiddingSpell(id, SpellType.valueOf(spellType),</span>
+<span class="fc" id="L127">                BidType.valueOf(bidType), slot, BidType.valueOf(bidTypeBlocked)));</span>
+
+<span class="fc" id="L129">    }</span>
+
+    @Override
+    public void addStructuralSpell(final int id, final String spellType, final String bidType,
+                                   final int slot,
+                                   final String structureEffect, final boolean other) {
+<span class="fc" id="L135">        this.spells.add(new StructuralSpell(id, SpellType.valueOf(spellType),</span>
+<span class="fc" id="L136">                BidType.valueOf(bidType), slot, StructureEffect.valueOf(structureEffect)));</span>
+
+<span class="fc" id="L138">    }</span>
+
+    @Override
+    public void setMaxPlayers(final int maxPlayers) {
+<span class="fc" id="L142">        this.maxPlayers = maxPlayers;</span>
+<span class="fc" id="L143">    }</span>
+
+    @Override
+    public void setSeed(final long seed) {
+<span class="fc" id="L147">        this.randomSeed = seed;</span>
+<span class="fc" id="L148">    }</span>
+
+    @Override
+    public void setYears(final int years) {
+<span class="fc" id="L152">        this.years = years;</span>
+<span class="fc" id="L153">    }</span>
+
+    @Override
+    public void setDungeonSideLength(final int dungeonSideLength) {
+<span class="fc" id="L157">        this.dungeonSideLength = dungeonSideLength;</span>
+<span class="fc" id="L158">    }</span>
+
+    @Override
+    public void setInitialFood(final int food) {
+<span class="fc" id="L162">        this.initialFood = food;</span>
+<span class="fc" id="L163">    }</span>
+
+    @Override
+    public void setInitialGold(final int gold) {
+<span class="fc" id="L167">        this.initialGold = gold;</span>
+<span class="fc" id="L168">    }</span>
+
+    @Override
+    public void setInitialImps(final int imps) {
+<span class="fc" id="L172">        this.initialImps = imps;</span>
+<span class="fc" id="L173">    }</span>
+
+    @Override
+    public void setInitialEvilness(final int evilness) {
+<span class="fc" id="L177">        this.initialEvilness = evilness;</span>
+<span class="fc" id="L178">    }</span>
+
+    @Override
+    public Model build() {
+<span class="fc" id="L182">        return new Model(</span>
+                this.monsters,
+                this.adventurers,
+                this.traps,
+                this.rooms,
+                this.randomSeed,
+                this.maxPlayers,
+                this.years,
+                this.dungeonSideLength,
+                this.initialFood,
+                this.initialGold,
+                this.initialImps,
+                this.initialEvilness,
+                this.spells);
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

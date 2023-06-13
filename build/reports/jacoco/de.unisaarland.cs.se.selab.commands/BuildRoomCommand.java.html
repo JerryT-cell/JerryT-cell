@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BuildRoomCommand.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.commands</a> &gt; <span class="el_source">BuildRoomCommand.java</span></div><h1>BuildRoomCommand.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.commands;
+
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.model.dungeon.Coordinate;
+import de.unisaarland.cs.se.selab.model.dungeon.Room;
+import de.unisaarland.cs.se.selab.model.dungeon.Tunnel;
+import de.unisaarland.cs.se.selab.model.dungeon.TunnelGraph;
+import de.unisaarland.cs.se.selab.state.State;
+import java.util.Optional;
+import java.util.Set;
+
+/**
+ * A player builds a room.
+ */
+public class BuildRoomCommand extends PlayerCommand {
+
+    private final int roomId;
+    private final Coordinate coordinate;
+
+    public BuildRoomCommand(final int playerId, final int x, final int y, final int roomId) {
+<span class="nc" id="L23">        super(playerId);</span>
+<span class="nc" id="L24">        this.coordinate = new Coordinate(x, y);</span>
+<span class="nc" id="L25">        this.roomId = roomId;</span>
+<span class="nc" id="L26">    }</span>
+
+    @Override
+    public Set&lt;State.Phase&gt; inPhase() {
+<span class="nc" id="L30">        return Set.of(State.Phase.PLACING_ROOM);</span>
+    }
+
+    @Override
+    public ActionResult run(final Model model, final ConnectionWrapper connection) {
+<span class="nc" id="L35">        final Optional&lt;Room&gt; optRoom = model.getAvailableRoom(this.roomId);</span>
+
+<span class="nc bnc" id="L37" title="All 2 branches missed.">        if (optRoom.isEmpty()) {</span>
+<span class="nc" id="L38">            connection.sendActionFailed(getId(), &quot;This room is not available.&quot;);</span>
+<span class="nc" id="L39">            return ActionResult.RETRY;</span>
+        }
+
+<span class="nc" id="L42">        final Room room = optRoom.get();</span>
+<span class="nc" id="L43">        final Player player = model.getPlayerById(getId());</span>
+<span class="nc" id="L44">        final TunnelGraph graph = player.getDungeon().getGraph();</span>
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        if (!BuildRoomCommand.isValidBuildLocation(room, this.coordinate, graph,</span>
+<span class="nc" id="L46">                model.getDungeonSideLength())) {</span>
+<span class="nc" id="L47">            connection.sendActionFailed(getId(), &quot;You cannot place your room here.&quot;);</span>
+<span class="nc" id="L48">            return ActionResult.RETRY;</span>
+        }
+
+<span class="nc" id="L51">        model.removeAvailableRoom(room);</span>
+<span class="nc" id="L52">        graph.getTunnel(this.coordinate).ifPresent(tunnel -&gt; tunnel.buildRoom(room));</span>
+<span class="nc" id="L53">        connection.sendRoomBuilt(getId(), this.roomId, this.coordinate);</span>
+<span class="nc" id="L54">        return ActionResult.PROCEED;</span>
+    }
+
+    /**
+     * Checks whether a room may be placed at a given coordinate or not.
+     *
+     * @param room       the room to be placed
+     * @param coordinate the coordinate where the room shall be placed
+     * @param graph      the graph the room shall be added to
+     * @param sideLength the graph's side length
+     * @return {@code true} if the room may be placed at the coordinate or {@code false} otherwise
+     */
+    public static boolean isValidBuildLocation(final Room room, final Coordinate coordinate,
+                                               final TunnelGraph graph, final int sideLength) {
+        // A room cannot have an adjacent room.
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        for (final Tunnel tunnel : graph.getNeighbours(coordinate)) {</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">            if (tunnel.isRoom()) {</span>
+<span class="nc" id="L71">                return false;</span>
+            }
+<span class="nc" id="L73">        }</span>
+        // A room can only replace an unconquered tunnel.
+<span class="nc" id="L75">        final Optional&lt;Tunnel&gt; tunnel = graph.getTunnel(coordinate);</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (tunnel.isEmpty()</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">                || tunnel.get().isRoom()</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">                || tunnel.get().isConquered()) {</span>
+<span class="nc" id="L79">            return false;</span>
+        }
+<span class="nc" id="L81">        return BuildRoomCommand.checkRoomRestriction(room, coordinate, sideLength);</span>
+    }
+
+    /**
+     * Checks whether a given coordinate fulfills a room's placement restrictions.
+     *
+     * @param room       the room to be placed
+     * @param coordinate the coordinate where the room shall be placed
+     * @param sideLength the graph's side length
+     * @return {@code true} if the coordinate fulfills the placement restriction or {@code false}
+     *         otherwise
+     */
+    public static boolean checkRoomRestriction(final Room room, final Coordinate coordinate,
+                                               final int sideLength) {
+<span class="nc" id="L95">        final int middle = (sideLength / 2) - 1;</span>
+<span class="nc bnc" id="L96" title="All 5 branches missed.">        return switch (room.getRestriction()) {</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">            case UPPER_HALF -&gt; coordinate.posY() &lt;= middle;</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">            case LOWER_HALF -&gt; coordinate.posY() &gt; middle;</span>
+<span class="nc bnc" id="L99" title="All 4 branches missed.">            case OUTER_RING -&gt; (coordinate.posX() == 0 || coordinate.posX() == sideLength - 1)</span>
+<span class="nc bnc" id="L100" title="All 4 branches missed.">                    || (coordinate.posY() == 0 || coordinate.posY() == sideLength - 1);</span>
+<span class="nc bnc" id="L101" title="All 4 branches missed.">            case INNER_RING -&gt; (coordinate.posX() != 0 &amp;&amp; coordinate.posX() != sideLength - 1)</span>
+<span class="nc bnc" id="L102" title="All 4 branches missed.">                    &amp;&amp; (coordinate.posY() != 0 &amp;&amp; coordinate.posY() != sideLength - 1);</span>
+        };
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

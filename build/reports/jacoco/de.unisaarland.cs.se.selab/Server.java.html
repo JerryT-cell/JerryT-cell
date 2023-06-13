@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Server.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab</a> &gt; <span class="el_source">Server.java</span></div><h1>Server.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab;
+
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.state.RegistrationState;
+import de.unisaarland.cs.se.selab.state.State;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * The server class manages the game's state machine.
+ */
+public class Server {
+
+<span class="nc" id="L14">    private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);</span>
+
+    private final ConnectionWrapper connection;
+    private final Model model;
+
+<span class="nc" id="L19">    public Server(final Model model, final ConnectionWrapper connection) {</span>
+<span class="nc" id="L20">        this.connection = connection;</span>
+<span class="nc" id="L21">        this.model = model;</span>
+<span class="nc" id="L22">    }</span>
+
+    /**
+     * This function contains the game loop.
+     * It starts with the registration phase and ends if it encounters an end state.
+     */
+    public final void run() {
+<span class="nc" id="L29">        State currentState = new RegistrationState(this.model, this.connection);</span>
+<span class="nc bnc" id="L30" title="All 2 branches missed.">        while (!currentState.isEndState()) {</span>
+<span class="nc" id="L31">            LOGGER.info(&quot;Calling run on {}&quot;, this);</span>
+<span class="nc" id="L32">            currentState = currentState.run();</span>
+        }
+<span class="nc" id="L34">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ModelValidator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.config</a> &gt; <span class="el_source">ModelValidator.java</span></div><h1>ModelValidator.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.config;
+
+
+import de.unisaarland.cs.se.selab.model.AttackStrategy;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.state.BuildingState;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * The model validator checks all constraints before inserting elements into the model builder.
+ * &lt;p&gt;
+ * The model validator combines the builder pattern with delegation to automatically validate the
+ * config before creating the model.
+ * It does so by delegating all function calls to another builder similar to a decorator pattern.
+ * &lt;/p&gt;
+ *
+ * @param &lt;M&gt; the model class to be built
+ */
+public class ModelValidator&lt;M&gt; implements ModelBuilderInterface&lt;M&gt; {
+
+    private final ModelBuilderInterface&lt;M&gt; builder;
+    private final Set&lt;Integer&gt; monsterIds;
+    private final Set&lt;Integer&gt; adventurerIds;
+    private final Set&lt;Integer&gt; trapIds;
+    private final Set&lt;Integer&gt; roomIds;
+    private final Set&lt;Integer&gt; spellIds;
+    private final Set&lt;String&gt; setProperties;
+    private int years;
+    private int maxPlayers;
+
+<span class="fc" id="L32">    public ModelValidator(final ModelBuilderInterface&lt;M&gt; builder) {</span>
+<span class="fc" id="L33">        this.builder = builder;</span>
+<span class="fc" id="L34">        this.monsterIds = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L35">        this.adventurerIds = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L36">        this.trapIds = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L37">        this.roomIds = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L38">        this.setProperties = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L39">        this.spellIds = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L40">    }</span>
+
+    /////////////////////////////////////////////
+    //            HELPER FUNCTIONS             //
+    /////////////////////////////////////////////
+
+
+    private void checkPropertiesSet(final String... properties) {
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        for (final String property : properties) {</span>
+<span class="pc bpc" id="L49" title="1 of 2 branches missed.">            if (!setProperties.contains(property)) {</span>
+<span class="nc" id="L50">                throw new IllegalArgumentException(</span>
+<span class="nc" id="L51">                        String.format(&quot;%s is required to be present.&quot;, property));</span>
+            }
+        }
+<span class="fc" id="L54">    }</span>
+
+    private void checkBounds(final String attrName, final int lowerBound, final int upperBound,
+                             final int value) {
+<span class="fc bfc" id="L58" title="All 4 branches covered.">        if (value &lt; lowerBound || value &gt; upperBound) {</span>
+<span class="fc" id="L59">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L60">                    String.format(&quot;%s is required to be between %d and %d.&quot;, attrName, lowerBound,</span>
+<span class="fc" id="L61">                            upperBound));</span>
+        }
+<span class="fc" id="L63">    }</span>
+
+    private void checkPositiveZero(final String attrName, final int value) {
+<span class="fc" id="L66">        checkBounds(attrName, 0, Integer.MAX_VALUE, value);</span>
+<span class="fc" id="L67">    }</span>
+
+    private void checkPositiveNonZero(final String attrName, final int value) {
+<span class="fc" id="L70">        checkBounds(attrName, 1, Integer.MAX_VALUE, value);</span>
+<span class="fc" id="L71">    }</span>
+
+    private void checkUniqueId(final String attrName, final Set&lt;Integer&gt; set, final int value) {
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if (set.contains(value)) {</span>
+<span class="fc" id="L75">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L76">                    String.format(&quot;%sIds is required to be unique.&quot;, attrName));</span>
+        }
+<span class="fc" id="L78">    }</span>
+
+    private &lt;T&gt; void checkLength(final String attrName, final Set&lt;T&gt; set, final int bound) {
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">        if (set.size() &lt; bound) {</span>
+<span class="nc" id="L82">            throw new IllegalArgumentException(</span>
+<span class="nc" id="L83">                    String.format(&quot;%s is supposed to have at least %d elements.&quot;, attrName, bound));</span>
+        }
+<span class="fc" id="L85">    }</span>
+
+    //added
+    private void commonSpellcheck(final String name, final int id, final int slot,
+                                  final boolean other) {
+<span class="fc" id="L90">        checkUniqueId(name, this.spellIds, id);</span>
+<span class="fc" id="L91">        checkBounds(name, 1, 3, slot);</span>
+<span class="fc" id="L92">        checkAdditionalAttribute(name, other);</span>
+<span class="fc" id="L93">    }</span>
+
+    private void checkAdditionalAttribute(final String name, final boolean attribute) {
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (attribute) {</span>
+<span class="fc" id="L97">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L98">                    String.format(&quot;%s is not required to have additional attributes.&quot;, name)</span>
+            );
+        }
+<span class="fc" id="L101">    }</span>
+
+    private void checkNoZero(final String name, final int value1, final int value2) {
+<span class="fc bfc" id="L104" title="All 4 branches covered.">        if (value1 == 0 &amp;&amp; value2 == 0) {</span>
+<span class="fc" id="L105">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L106">                    String.format(&quot; The values of the attributes of the %s &quot;</span>
+                            + &quot;should be greater than 0&quot;, name)
+            );
+        }
+<span class="fc" id="L110">    }</span>
+
+    private void checkNoZero(final String name, final int value1, final int value2,
+                             final int value3) {
+<span class="fc bfc" id="L114" title="All 6 branches covered.">        if (value1 == 0 &amp;&amp; value2 == 0 &amp;&amp; value3 == 0) {</span>
+<span class="fc" id="L115">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L116">                    String.format(&quot; The values of the attributes of the %s &quot;</span>
+                            + &quot;should be greater than 0&quot;, name)
+            );
+        }
+<span class="fc" id="L120">    }</span>
+
+
+    /////////////////////////////////////////////
+    //            BUILDER FUNCTIONS            //
+    /////////////////////////////////////////////
+
+
+    @Override
+    public void addMonster(final int id, final int hunger, final int damage, final int evilness,
+                           final String attack) {
+<span class="fc" id="L131">        checkUniqueId(&quot;Monster&quot;, this.monsterIds, id);</span>
+<span class="fc" id="L132">        checkPositiveZero(&quot;Monster &quot; + ModelBuilderInterface.CFG_ID, id);</span>
+<span class="fc" id="L133">        checkPositiveZero(&quot;Monster &quot; + ModelBuilderInterface.CFG_MONSTER_HUNGER, hunger);</span>
+<span class="fc" id="L134">        checkPositiveNonZero(&quot;Monster &quot; + ModelBuilderInterface.CFG_MONSTER_DAMAGE, damage);</span>
+<span class="fc" id="L135">        checkPositiveZero(&quot;Monster &quot; + ModelBuilderInterface.CFG_MONSTER_EVILNESS, evilness);</span>
+<span class="fc" id="L136">        this.monsterIds.add(id);</span>
+<span class="fc" id="L137">        this.builder.addMonster(id, hunger, damage, evilness, attack);</span>
+<span class="fc" id="L138">    }</span>
+
+    @Override
+    public void addAdventurer(final int id, final int difficulty, final int healthPoints,
+                              final int healValue,
+                              final int defuseValue, final boolean charge, final int magicPoints) {
+<span class="fc" id="L144">        checkUniqueId(&quot;Adventurer&quot;, this.adventurerIds, id);</span>
+<span class="fc" id="L145">        checkPositiveZero(&quot;Adventurer &quot; + ModelBuilderInterface.CFG_ID, id);</span>
+<span class="fc" id="L146">        checkPositiveZero(&quot;Adventurer &quot; + ModelBuilderInterface.CFG_ADV_DIFFICULTY, difficulty);</span>
+<span class="fc" id="L147">        checkPositiveNonZero(&quot;Adventurer &quot; + ModelBuilderInterface.CFG_ADV_HEALTH_POINTS,</span>
+                healthPoints);
+<span class="fc" id="L149">        checkPositiveZero(&quot;Adventurer &quot; + ModelBuilderInterface.CFG_ADV_HEAL_VALUE, healValue);</span>
+<span class="fc" id="L150">        checkPositiveZero(&quot;Adventurer &quot; + ModelBuilderInterface.CFG_ADV_DEFUSE_VALUE, defuseValue);</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">        if (magicPoints != 0) {</span>
+<span class="fc" id="L152">            checkBounds(&quot;Adventurer&quot; + ModelBuilderInterface.CFG_ADV_MAGIC_POINTS, 1, 3,</span>
+                    magicPoints);
+        }
+<span class="fc" id="L155">        this.adventurerIds.add(id);</span>
+<span class="fc" id="L156">        this.builder.addAdventurer(id, difficulty, healthPoints, healValue, defuseValue, charge,</span>
+                magicPoints);
+<span class="fc" id="L158">    }</span>
+
+    @Override
+    public void addTrap(final int id, final String attack, final int damage) {
+<span class="fc" id="L162">        checkUniqueId(&quot;Trap&quot;, this.trapIds, id);</span>
+<span class="fc" id="L163">        checkPositiveZero(&quot;Trap &quot; + ModelBuilderInterface.CFG_ID, id);</span>
+<span class="fc" id="L164">        checkPositiveNonZero(&quot;Trap &quot; + ModelBuilderInterface.CFG_TRAP_DAMAGE, damage);</span>
+<span class="pc bpc" id="L165" title="1 of 2 branches missed.">        if (AttackStrategy.valueOf(attack) == AttackStrategy.TARGETED) {</span>
+<span class="nc" id="L166">            throw new IllegalArgumentException(</span>
+<span class="nc" id="L167">                    String.format(&quot;Trap(%d) is targeted but has no target&quot;, id));</span>
+        }
+<span class="fc" id="L169">        this.trapIds.add(id);</span>
+<span class="fc" id="L170">        this.builder.addTrap(id, attack, damage);</span>
+<span class="fc" id="L171">    }</span>
+
+    @Override
+    public void addTrap(final int id, final String attack, final int damage, final int target) {
+<span class="fc" id="L175">        checkUniqueId(&quot;Trap&quot;, this.trapIds, id);</span>
+<span class="fc" id="L176">        checkPositiveZero(&quot;Trap &quot; + ModelBuilderInterface.CFG_ID, id);</span>
+<span class="fc" id="L177">        checkPositiveNonZero(&quot;Trap &quot; + ModelBuilderInterface.CFG_TRAP_DAMAGE, damage);</span>
+<span class="fc" id="L178">        checkBounds(&quot;Trap &quot; + ModelBuilderInterface.CFG_TRAP_TARGET, 1, 4, target);</span>
+<span class="fc" id="L179">        this.trapIds.add(id);</span>
+<span class="fc bfc" id="L180" title="All 2 branches covered.">        if (AttackStrategy.valueOf(attack) != AttackStrategy.TARGETED) {</span>
+<span class="fc" id="L181">            this.builder.addTrap(id, attack, damage);</span>
+        } else {
+<span class="fc" id="L183">            this.builder.addTrap(id, attack, damage, target);</span>
+        }
+<span class="fc" id="L185">    }</span>
+
+    @Override
+    public void addRoom(final int id, final int activation, final String restriction,
+                        final int food, final int gold,
+                        final int imps, final int niceness) {
+<span class="fc" id="L191">        checkUniqueId(&quot;Room&quot;, this.roomIds, id);</span>
+<span class="fc" id="L192">        checkPositiveZero(&quot;Room &quot; + ModelBuilderInterface.CFG_ID, id);</span>
+<span class="fc" id="L193">        checkPositiveNonZero(&quot;Room &quot; + ModelBuilderInterface.CFG_ROOM_ACTIVATION, activation);</span>
+<span class="fc" id="L194">        checkPositiveZero(&quot;Room &quot; + ModelBuilderInterface.CFG_ROOM_FOOD, food);</span>
+<span class="fc" id="L195">        checkPositiveZero(&quot;Room &quot; + ModelBuilderInterface.CFG_ROOM_GOLD, gold);</span>
+<span class="fc" id="L196">        checkPositiveZero(&quot;Room &quot; + ModelBuilderInterface.CFG_ROOM_IMPS, imps);</span>
+<span class="fc" id="L197">        checkPositiveZero(&quot;Room &quot; + ModelBuilderInterface.CFG_ROOM_NICENESS, niceness);</span>
+<span class="fc" id="L198">        this.roomIds.add(id);</span>
+<span class="fc" id="L199">        this.builder.addRoom(id, activation, restriction, food, gold, imps, niceness);</span>
+<span class="fc" id="L200">    }</span>
+
+    @Override
+    public void addResourceSpell(final int id, final String spellType, final String bidType,
+                                 final int slot, final int food,
+                                 final int gold, final boolean other) {
+<span class="fc" id="L206">        commonSpellcheck(&quot;ResourceSpell &quot;, id, slot, other);</span>
+<span class="fc" id="L207">        checkPositiveZero(&quot;ResourceSpell &quot; + ModelBuilderInterface.CFG_SPELL_FOOD, food);</span>
+<span class="fc" id="L208">        checkPositiveZero(&quot;ResourceSpell &quot; + ModelBuilderInterface.CFG_SPELL_GOLD, gold);</span>
+<span class="fc" id="L209">        checkNoZero(&quot;ResourceSpell&quot;, food, gold);</span>
+
+<span class="fc" id="L211">        this.spellIds.add(id);</span>
+<span class="fc" id="L212">        this.builder.addResourceSpell(id, spellType, bidType, slot, food, gold, false);</span>
+
+<span class="fc" id="L214">    }</span>
+
+    @Override
+    public void addBuffSpell(final int id, final String spellType, final String bidType,
+                             final int slot, final int healthPoints,
+                             final int defuseValue, final int healValue, final boolean other) {
+<span class="fc" id="L220">        commonSpellcheck(&quot;BuffSpell &quot;, id, slot, other);</span>
+<span class="fc" id="L221">        checkPositiveZero(&quot;BuffSpell &quot; + ModelBuilderInterface.CFG_SPELL_HEALTHPOINTS,</span>
+                healthPoints);
+<span class="fc" id="L223">        checkPositiveZero(&quot;BuffSpell &quot; + ModelBuilderInterface.CFG_SPELL_DEFUSEVALUE,</span>
+                defuseValue);
+<span class="fc" id="L225">        checkPositiveZero(&quot;BuffSpell &quot; + ModelBuilderInterface.CFG_SPELL_HEALVALUE,</span>
+                healValue);
+
+<span class="fc" id="L228">        checkNoZero(&quot;BuffSpell &quot;, healValue, healthPoints, defuseValue);</span>
+
+<span class="fc" id="L230">        this.spellIds.add(id);</span>
+<span class="fc" id="L231">        this.builder.addBuffSpell(id, spellType, bidType, slot, healthPoints, defuseValue,</span>
+                healValue, false);
+
+<span class="fc" id="L234">    }</span>
+
+    @Override
+    public void addRoomSpell(final int id, final String spellType, final String bidType,
+                             final int slot, final boolean other) {
+<span class="fc" id="L239">        commonSpellcheck(&quot;RoomSpell &quot;, id, slot, other);</span>
+<span class="fc" id="L240">        this.spellIds.add(id);</span>
+<span class="fc" id="L241">        this.builder.addRoomSpell(id, spellType, bidType, slot, false);</span>
+<span class="fc" id="L242">    }</span>
+
+    @Override
+    public void addBiddingSpell(final int id, final String spellType, final String bidType,
+                                final int slot,
+                                final String bidTypeBlocked, final boolean other) {
+<span class="fc" id="L248">        commonSpellcheck(&quot;BiddingSpell &quot;, id, slot, other);</span>
+<span class="fc" id="L249">        this.spellIds.add(id);</span>
+<span class="fc" id="L250">        this.builder.addBiddingSpell(id, spellType, bidType, slot, bidTypeBlocked, false);</span>
+<span class="fc" id="L251">    }</span>
+
+    @Override
+    public void addStructuralSpell(final int id, final String spellType, final String bidType,
+                                   final int slot,
+                                   final String structureEffect, final boolean other) {
+<span class="fc" id="L257">        commonSpellcheck(&quot;StructuralSpell&quot;, id, slot, other);</span>
+<span class="fc" id="L258">        this.spellIds.add(id);</span>
+<span class="fc" id="L259">        this.builder.addStructuralSpell(id, spellType, bidType, slot, structureEffect, other);</span>
+<span class="fc" id="L260">    }</span>
+
+
+    @Override
+    public void setMaxPlayers(final int maxPlayers) {
+<span class="fc" id="L265">        this.maxPlayers = maxPlayers;</span>
+<span class="fc" id="L266">        this.builder.setMaxPlayers(maxPlayers);</span>
+<span class="fc" id="L267">        checkPositiveNonZero(ModelBuilderInterface.CFG_MAX_PLAYERS, maxPlayers);</span>
+<span class="fc" id="L268">        setProperties.add(ModelBuilderInterface.CFG_MAX_PLAYERS);</span>
+<span class="fc" id="L269">    }</span>
+
+    @Override
+    public void setSeed(final long seed) {
+<span class="fc" id="L273">        this.builder.setSeed(seed);</span>
+<span class="fc" id="L274">        setProperties.add(CFG_SEED);</span>
+<span class="fc" id="L275">    }</span>
+
+    @Override
+    public void setYears(final int years) {
+<span class="fc" id="L279">        this.years = years;</span>
+<span class="fc" id="L280">        this.builder.setYears(years);</span>
+<span class="fc" id="L281">        checkBounds(ModelBuilderInterface.CFG_YEARS, 1, Integer.MAX_VALUE, years);</span>
+<span class="fc" id="L282">        setProperties.add(ModelBuilderInterface.CFG_YEARS);</span>
+<span class="fc" id="L283">    }</span>
+
+    @Override
+    public void setDungeonSideLength(final int dungeonSideLength) {
+<span class="fc" id="L287">        this.builder.setDungeonSideLength(dungeonSideLength);</span>
+<span class="fc" id="L288">        checkBounds(ModelBuilderInterface.CFG_DUNGEON_SIDELENGTH, 1, 15, dungeonSideLength);</span>
+<span class="fc" id="L289">        setProperties.add(ModelBuilderInterface.CFG_DUNGEON_SIDELENGTH);</span>
+<span class="fc" id="L290">    }</span>
+
+    @Override
+    public void setInitialFood(final int food) {
+<span class="fc" id="L294">        this.builder.setInitialFood(food);</span>
+<span class="fc" id="L295">        checkPositiveZero(ModelBuilderInterface.CFG_INITIAL_FOOD, food);</span>
+<span class="fc" id="L296">        setProperties.add(ModelBuilderInterface.CFG_INITIAL_FOOD);</span>
+<span class="fc" id="L297">    }</span>
+
+    @Override
+    public void setInitialGold(final int gold) {
+<span class="fc" id="L301">        this.builder.setInitialGold(gold);</span>
+<span class="fc" id="L302">        checkPositiveZero(ModelBuilderInterface.CFG_INITIAL_GOLD, gold);</span>
+<span class="fc" id="L303">        setProperties.add(ModelBuilderInterface.CFG_INITIAL_GOLD);</span>
+<span class="fc" id="L304">    }</span>
+
+    @Override
+    public void setInitialImps(final int imps) {
+<span class="fc" id="L308">        this.builder.setInitialImps(imps);</span>
+<span class="fc" id="L309">        checkPositiveZero(ModelBuilderInterface.CFG_INITIAL_IMPS, imps);</span>
+<span class="fc" id="L310">        setProperties.add(ModelBuilderInterface.CFG_INITIAL_IMPS);</span>
+<span class="fc" id="L311">    }</span>
+
+    @Override
+    public void setInitialEvilness(final int evilness) {
+<span class="fc" id="L315">        this.builder.setInitialEvilness(evilness);</span>
+<span class="fc" id="L316">        checkBounds(ModelBuilderInterface.CFG_INITIAL_EVILNESS, 0, 15, evilness);</span>
+<span class="fc" id="L317">        setProperties.add(ModelBuilderInterface.CFG_INITIAL_EVILNESS);</span>
+<span class="fc" id="L318">    }</span>
+
+    @Override
+    public M build() {
+<span class="fc" id="L322">        checkPropertiesSet(</span>
+                ModelBuilderInterface.CFG_SEED,
+                ModelBuilderInterface.CFG_MAX_PLAYERS,
+                ModelBuilderInterface.CFG_YEARS,
+                ModelBuilderInterface.CFG_DUNGEON_SIDELENGTH,
+                ModelBuilderInterface.CFG_INITIAL_FOOD,
+                ModelBuilderInterface.CFG_INITIAL_GOLD,
+                ModelBuilderInterface.CFG_INITIAL_IMPS,
+                ModelBuilderInterface.CFG_INITIAL_EVILNESS
+        );
+<span class="fc" id="L332">        checkLength(&quot;Adventurers&quot;, this.adventurerIds,</span>
+                this.years * (Model.MAX_ROUNDS - 1) * this.maxPlayers);
+<span class="fc" id="L334">        final int rounds = this.years * Model.MAX_ROUNDS;</span>
+<span class="fc" id="L335">        checkLength(&quot;Rooms&quot;, this.roomIds, rounds * BuildingState.ROOMS_PER_ROUND);</span>
+<span class="fc" id="L336">        checkLength(&quot;Traps&quot;, this.trapIds, rounds * 4);</span>
+<span class="fc" id="L337">        checkLength(&quot;Spells&quot;, this.spellIds, rounds * 3);</span>
+<span class="fc" id="L338">        checkLength(&quot;Monsters&quot;, this.monsterIds,</span>
+                rounds * BuildingState.MONSTERS_PER_ROUND);
+<span class="fc" id="L340">        return this.builder.build();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

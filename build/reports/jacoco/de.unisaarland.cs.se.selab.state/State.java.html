@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>State.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.state</a> &gt; <span class="el_source">State.java</span></div><h1>State.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.state;
+
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.model.Model;
+
+/**
+ * The superclass for all game states.
+ * &lt;p&gt;
+ * The state's logic is implemented in the {@link State#run()} function.
+ * This function always returns the next state that should be run.
+ * Every state has access to the current game model and server connection.
+ * &lt;/p&gt;
+ */
+public abstract class State {
+
+    /**
+     * This enum is used to determine when certain actions can be executed.
+     */
+<span class="nc" id="L19">    public enum Phase {</span>
+<span class="nc" id="L20">        REGISTRATION,</span>
+<span class="nc" id="L21">        BUILDING,</span>
+<span class="nc" id="L22">        COMBAT,</span>
+<span class="nc" id="L23">        OFF,</span>
+<span class="nc" id="L24">        HIRING_MONSTER,</span>
+<span class="nc" id="L25">        PLACING_TUNNEL,</span>
+<span class="nc" id="L26">        PLACING_ROOM,</span>
+<span class="nc" id="L27">        SET_BATTLEGROUND,</span>
+<span class="nc" id="L28">        SPELL</span>
+    }
+
+    protected final Model model;
+    protected final ConnectionWrapper connection;
+
+<span class="nc" id="L34">    protected State(final Model model, final ConnectionWrapper connection) {</span>
+<span class="nc" id="L35">        this.model = model;</span>
+<span class="nc" id="L36">        this.connection = connection;</span>
+<span class="nc" id="L37">    }</span>
+
+    /**
+     * This method is called by the {@link de.unisaarland.cs.se.selab.Server} and contains all the
+     * functionality of the state.
+     *
+     * @return the next state
+     */
+    public abstract State run();
+
+    /**
+     * This method indicates whether this state is an end state.
+     * &lt;p&gt;
+     * If an end state is encountered, the server will exit without calling {@code run()} on the
+     * state.
+     * &lt;/p&gt;
+     *
+     * @return whether this state is an end state
+     */
+    public boolean isEndState() {
+<span class="nc" id="L57">        return false;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

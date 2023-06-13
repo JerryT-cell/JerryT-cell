@@ -1,0 +1,89 @@
+{
+  "maxPlayers": 4,
+  "years": 2,
+  "dungeonSideLength": 5,
+  "initialFood": 3,
+  "initialGold": 3,
+  "initialImps": 3,
+  "monsters": [
+    {
+      "id": 0,
+      "name": "Ghost",
+      "hunger": 1,
+      "evilness": 1,
+      "damage": 2,
+      "attackStrategy": "BASIC"
+    },
+    {
+      "id": 1,
+      "name": "Ork",
+      "evilness": 3,
+      "damage": 2,
+      "attackStrategy": "MULTI"
+    }
+  ],
+  "adventurers": [
+    {
+      "id": 0,
+      "name": "Maxi",
+      "difficulty": 1,
+      "healthPoints": 3,
+      "charge": true,
+      "magicPoints": 1
+    },
+    {
+      "id": 1,
+      "name": "Leo",
+      "difficulty": 2,
+      "healthPoints": 3,
+      "healValue": 1
+    }
+  ],
+  "traps": [
+    {
+      "id": 0,
+      "name": "Poison Trap",
+      "attackStrategy": "BASIC",
+      "damage": 3
+    },
+    {
+      "id": 1,
+      "name": "Poison Trap",
+      "attackStrategy": "BASIC",
+      "damage": 3
+    }
+  ],
+  "rooms": [
+    {
+      "id": 0,
+      "name": "Mint",
+      "restriction": "LOWER_HALF",
+      "activation": 3,
+      "gold": 1
+    },
+    {
+      "id": 1,
+      "name": "Chicken Coop",
+      "restriction": "UPPER_HALF",
+      "activation": 2,
+      "food": 1
+    }
+  ],
+  "spells": [
+    {
+      "id": 0,
+      "spellType": "RESOURCE",
+      "bidType": "FOOD",
+      "slot": 4,
+      "food": 0,
+      "gold": 1
+    },
+    {
+      "id": 0,
+      "spellType": "BUFF",
+      "bidType": "ROOM",
+      "slot": 3,
+      "healthPoints": 2
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PlaceMonsterCommand.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.commands</a> &gt; <span class="el_source">PlaceMonsterCommand.java</span></div><h1>PlaceMonsterCommand.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.commands;
+
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Monster;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.model.dungeon.Dungeon;
+import de.unisaarland.cs.se.selab.model.dungeon.Tunnel;
+import de.unisaarland.cs.se.selab.state.State;
+import java.util.Optional;
+import java.util.Set;
+
+/**
+ * A player places a monster for defense.
+ */
+public abstract class PlaceMonsterCommand extends PlayerCommand {
+
+    private final int monsterId;
+
+    public PlaceMonsterCommand(final int playerId, final int monsterId) {
+<span class="nc" id="L21">        super(playerId);</span>
+<span class="nc" id="L22">        this.monsterId = monsterId;</span>
+<span class="nc" id="L23">    }</span>
+
+    @Override
+    public Set&lt;State.Phase&gt; inPhase() {
+<span class="nc" id="L27">        return Set.of(State.Phase.COMBAT);</span>
+    }
+
+    @Override
+    public ActionResult run(final Model model, final ConnectionWrapper connection) {
+<span class="nc" id="L32">        final Player player = model.getPlayerById(getId());</span>
+<span class="nc" id="L33">        final Optional&lt;Monster&gt; optMonster = player.getMonster(this.monsterId);</span>
+
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        if (optMonster.isEmpty()) {</span>
+<span class="nc" id="L36">            connection.sendActionFailed(getId(), &quot;This monster does not belong to you.&quot;);</span>
+<span class="nc" id="L37">            return ActionResult.RETRY;</span>
+        }
+
+<span class="nc" id="L40">        final Dungeon dungeon = player.getDungeon();</span>
+<span class="nc" id="L41">        final Optional&lt;Tunnel&gt; battleGround = dungeon.getBattleGround();</span>
+<span class="nc bnc" id="L42" title="All 2 branches missed.">        if (battleGround.isEmpty()) {</span>
+<span class="nc" id="L43">            connection.sendActionFailed(getId(), &quot;The battleground has not been set yet.&quot;);</span>
+<span class="nc" id="L44">            return ActionResult.RETRY;</span>
+        }
+
+<span class="nc" id="L47">        final Monster monster = optMonster.get();</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">        if (monster.isUsed()) {</span>
+<span class="nc" id="L49">            connection.sendActionFailed(getId(), &quot;This monster has already been used this year.&quot;);</span>
+<span class="nc" id="L50">            return ActionResult.RETRY;</span>
+        }
+<span class="nc" id="L52">        return placeMonster(monster, dungeon, battleGround.get(), connection);</span>
+    }
+
+    protected abstract ActionResult placeMonster(Monster monster, Dungeon dungeon,
+                                                 Tunnel battleGround, ConnectionWrapper connection);
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

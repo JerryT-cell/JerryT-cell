@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="datatest.ParserValidatorBrokenTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2022-10-21T21:33:06" hostname="LAPTOP-0TK1TNTG" time="0.07">
+  <properties/>
+  <testcase name="runBrokenConfigTest()" classname="datatest.ParserValidatorBrokenTest" time="0.024"/>
+  <testcase name="brokenStructure()" classname="datatest.ParserValidatorBrokenTest" time="0.003"/>
+  <testcase name="brokenBidding()" classname="datatest.ParserValidatorBrokenTest" time="0.003"/>
+  <testcase name="broken2Test()" classname="datatest.ParserValidatorBrokenTest" time="0.003"/>
+  <testcase name="brokenBuff2()" classname="datatest.ParserValidatorBrokenTest" time="0.003"/>
+  <testcase name="brokenResource()" classname="datatest.ParserValidatorBrokenTest" time="0.002"/>
+  <testcase name="brokenResource2()" classname="datatest.ParserValidatorBrokenTest" time="0.002"/>
+  <testcase name="brokenBuff()" classname="datatest.ParserValidatorBrokenTest" time="0.005"/>
+  <testcase name="brokenRoom()" classname="datatest.ParserValidatorBrokenTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

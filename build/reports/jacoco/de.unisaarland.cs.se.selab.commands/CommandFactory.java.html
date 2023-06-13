@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CommandFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.commands</a> &gt; <span class="el_source">CommandFactory.java</span></div><h1>CommandFactory.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.commands;
+
+import de.unisaarland.cs.se.selab.comm.ActionFactory;
+import de.unisaarland.cs.se.selab.comm.BidType;
+import java.util.Map;
+import java.util.Optional;
+
+public class CommandFactory implements ActionFactory&lt;Command&gt; {
+
+    private final Map&lt;Integer, Integer&gt; commToPlayer;
+
+    private Optional&lt;Integer&gt; playerId(final int commID) {
+<span class="nc" id="L13">        return Optional.ofNullable(this.commToPlayer.get(commID));</span>
+    }
+
+<span class="nc" id="L16">    public CommandFactory(final Map&lt;Integer, Integer&gt; idMap) {</span>
+<span class="nc" id="L17">        this.commToPlayer = idMap;</span>
+<span class="nc" id="L18">    }</span>
+
+    @Override
+    public Command createRegister(final int commId, final String playerName) {
+<span class="nc" id="L22">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc" id="L23">        return playerId.map(id -&gt; new RegisterCommand(id, playerName, false))</span>
+<span class="nc" id="L24">                .orElseGet(() -&gt; new RegisterCommand(commId, playerName, true));</span>
+    }
+
+    @Override
+    public Command createLeave(final int commId) {
+<span class="nc" id="L29">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc bnc" id="L30" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L31">                ? new LeaveCommand(playerId.get())</span>
+<span class="nc" id="L32">                : new EmptyCommand();</span>
+    }
+
+    @Override
+    public Command createStartGame(final int commId) {
+<span class="nc" id="L37">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L39">                ? new StartGameCommand(playerId.get())</span>
+<span class="nc" id="L40">                : new EmptyCommand();</span>
+    }
+
+    @Override
+    public Command createPlaceBid(final int commId, final BidType order, final int slot) {
+<span class="nc" id="L45">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L47">                ? new PlaceBidCommand(playerId.get(), order, slot)</span>
+<span class="nc" id="L48">                : new EmptyCommand();</span>
+    }
+
+    @Override
+    public Command createDigTunnel(final int commId, final int x, final int y) {
+<span class="nc" id="L53">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L55">                ? new DigTunnelCommand(playerId.get(), x, y)</span>
+<span class="nc" id="L56">                : new EmptyCommand();</span>
+    }
+
+    @Override
+    public Command createHireMonster(final int commId, final int monster) {
+<span class="nc" id="L61">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L63">                ? new HireMonsterCommand(playerId.get(), monster)</span>
+<span class="nc" id="L64">                : new EmptyCommand();</span>
+    }
+
+    @Override
+    public Command createActivateRoom(final int commId, final int room) {
+<span class="nc" id="L69">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L71">                ? new ActivateRoomCommand(playerId.get(), room)</span>
+<span class="nc" id="L72">                : new EmptyCommand();</span>
+    }
+
+    @Override
+    public Command createBattleGround(final int commId, final int x, final int y) {
+<span class="nc" id="L77">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L79">                ? new BattleGroundCommand(playerId.get(), x, y)</span>
+<span class="nc" id="L80">                : new EmptyCommand();</span>
+    }
+
+    @Override
+    public Command createBuildRoom(final int commId, final int x, final int y, final int room) {
+<span class="nc" id="L85">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L87">                ? new BuildRoomCommand(playerId.get(), x, y, room)</span>
+<span class="nc" id="L88">                : new EmptyCommand();</span>
+    }
+
+    @Override
+    public Command createEndTurn(final int commId) {
+<span class="nc" id="L93">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L95">                ? new EndTurnCommand(playerId.get())</span>
+<span class="nc" id="L96">                : new EmptyCommand();</span>
+    }
+
+    @Override
+    public Command createMonster(final int commId, final int monster) {
+<span class="nc" id="L101">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L103">                ? new MonsterCommand(playerId.get(), monster)</span>
+<span class="nc" id="L104">                : new EmptyCommand();</span>
+    }
+
+    @Override
+    public Command createMonsterTargeted(final int commId, final int monster, final int position) {
+<span class="nc" id="L109">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L111">                ? new MonsterTargetedCommand(playerId.get(), monster, position)</span>
+<span class="nc" id="L112">                : new EmptyCommand();</span>
+    }
+
+    @Override
+    public Command createTrap(final int commId, final int trap) {
+<span class="nc" id="L117">        final Optional&lt;Integer&gt; playerId = playerId(commId);</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L119">                ? new TrapCommand(playerId.get(), trap)</span>
+<span class="nc" id="L120">                : new EmptyCommand();</span>
+    }
+
+    @Override
+    public Command createCastCounterSpell(final int i) {
+<span class="nc" id="L125">        final Optional&lt;Integer&gt; playerId = playerId(i);</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">        return playerId.isPresent()</span>
+<span class="nc" id="L127">                ? new CastCounterSpellCommand(playerId.get())</span>
+<span class="nc" id="L128">                : new EmptyCommand();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

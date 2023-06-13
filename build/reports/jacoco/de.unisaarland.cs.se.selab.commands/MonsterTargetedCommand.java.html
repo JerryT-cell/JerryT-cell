@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MonsterTargetedCommand.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.commands</a> &gt; <span class="el_source">MonsterTargetedCommand.java</span></div><h1>MonsterTargetedCommand.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.commands;
+
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.model.AttackStrategy;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Monster;
+import de.unisaarland.cs.se.selab.model.dungeon.Dungeon;
+import de.unisaarland.cs.se.selab.model.dungeon.Tunnel;
+
+/**
+ * A player sets a monster with a targeted attack for defense.
+ */
+public class MonsterTargetedCommand extends PlaceMonsterCommand {
+    private final int position;
+
+    public MonsterTargetedCommand(final int playerId, final int monsterId, final int position) {
+<span class="nc" id="L17">        super(playerId, monsterId);</span>
+<span class="nc" id="L18">        this.position = position;</span>
+<span class="nc" id="L19">    }</span>
+
+
+    @Override
+    protected ActionResult placeMonster(final Monster monster, final Dungeon dungeon,
+                                   final Tunnel battleGround, final ConnectionWrapper connection) {
+<span class="nc bnc" id="L25" title="All 2 branches missed.">        if (monster.getAttackStrategy() != (AttackStrategy.TARGETED)) {</span>
+<span class="nc" id="L26">            connection.sendActionFailed(getId(), &quot;This monster needs no target to fight.&quot;);</span>
+<span class="nc" id="L27">            return ActionResult.RETRY;</span>
+        }
+
+<span class="nc bnc" id="L30" title="All 4 branches missed.">        if (this.position &lt; 1 || this.position &gt; (Model.MAX_ROUNDS - 1)) {</span>
+<span class="nc" id="L31">            connection.sendActionFailed(getId(), &quot;Invalid Target&quot;);</span>
+<span class="nc" id="L32">            return ActionResult.RETRY;</span>
+        }
+<span class="nc bnc" id="L34" title="All 2 branches missed.">        if (!battleGround.addMonster(monster)) {</span>
+<span class="nc" id="L35">            connection.sendActionFailed(getId(), &quot;You cannot place any more monsters here.&quot;);</span>
+<span class="nc" id="L36">            return ActionResult.RETRY;</span>
+        }
+<span class="nc" id="L38">        monster.setTarget(this.position);</span>
+<span class="nc" id="L39">        monster.setUsed(true);</span>
+<span class="nc" id="L40">        connection.sendMonsterPlaced(monster.getId(), getId());</span>
+<span class="nc" id="L41">        return ActionResult.RETRY;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

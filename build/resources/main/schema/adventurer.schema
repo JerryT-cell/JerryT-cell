@@ -1,0 +1,46 @@
+{
+  "$defs": {
+    "adventurer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "main.schema#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "difficulty": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "healthPoints": {
+          "type": "number",
+          "minimum": 1
+        },
+        "magicPoints": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "healValue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "defuseValue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "charge": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "difficulty",
+        "healthPoints"
+      ],
+      "type": "object"
+    }
+  }
+}

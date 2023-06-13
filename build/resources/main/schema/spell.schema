@@ -1,0 +1,61 @@
+{
+  "$defs": {
+    "spell": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "main.schema#/$defs/id"
+        },
+        "spellType" : {
+          "type": "string",
+          "enum": ["BIDDING", "BUFF", "RESOURCE", "ROOM", "STRUCTURE"]
+        },
+        "bidType": {
+          "type": "string",
+          "enum": ["FOOD", "NICENESS", "TUNNEL", "GOLD", "IMPS", "TRAP",
+          "MONSTER", "ROOM"]
+        },
+        "slot": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "bidTypeBlocked": {
+          "type": "string",
+          "enum": ["FOOD", "NICENESS", "TUNNEL", "GOLD", "IMPS", "TRAP",
+          "MONSTER", "ROOM"]
+        },
+        "healthPoints": {
+          "type": "number",
+          "minimum": 1
+        },
+        "healValue": {
+          "type": "number",
+          "minimum": 1
+        },
+        "defuseValue": {
+           "type": "number",
+           "minimum": 1
+        },
+        "food": {
+          "type": "number",
+          "minimum": 1
+        },
+        "gold": {
+          "type": "number",
+          "minimum": 1
+        },
+        "structureEffect": {
+          "type": "string",
+          "enum": ["DESTROY", "CONQUER"]
+        },
+      },
+      "required": [
+        "spellType",
+        "bidType",
+        "slot"
+      ],
+      "type": "object"
+    }
+  }
+}

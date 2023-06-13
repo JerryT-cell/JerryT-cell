@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MonsterBid.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.state.bids</a> &gt; <span class="el_source">MonsterBid.java</span></div><h1>MonsterBid.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.state.bids;
+
+import de.unisaarland.cs.se.selab.ConnectionUtils;
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.commands.ActionResult;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.state.State;
+
+/**
+ * Class for monster bids.
+ */
+public final class MonsterBid extends Bid {
+
+    MonsterBid(final Player player, final int slot) {
+<span class="nc" id="L16">        super(player, slot);</span>
+<span class="nc" id="L17">    }</span>
+
+    @Override
+    protected ActionResult bidEvalImpl(final Model model, final ConnectionWrapper connection) {
+<span class="nc bnc" id="L21" title="All 2 branches missed.">        if (this.slot == 3) {</span>
+<span class="nc bnc" id="L22" title="All 2 branches missed.">            if (this.player.getFood() &gt;= 1) {</span>
+<span class="nc" id="L23">                ConnectionUtils.changeFood(this.player, -1, connection);</span>
+            } else {
+<span class="nc" id="L25">                return ActionResult.PROCEED;</span>
+            }
+        }
+
+<span class="nc" id="L29">        connection.sendSelectMonster(this.player.getId());</span>
+<span class="nc" id="L30">        return ConnectionUtils.executePlayerCommand(model, connection, State.Phase.HIRING_MONSTER,</span>
+                this.player);
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

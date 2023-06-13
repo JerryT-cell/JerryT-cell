@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConfigParser.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.config</a> &gt; <span class="el_source">ConfigParser.java</span></div><h1>ConfigParser.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.config;
+
+import de.unisaarland.cs.se.selab.spells.SpellType;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+/**
+ * Parses the config file and builds the model from the config using a {@link ModelBuilder}.
+ */
+<span class="nc" id="L10">public class ConfigParser {</span>
+
+    public static &lt;M&gt; M parse(final String config, final ModelBuilderInterface&lt;M&gt; builder) {
+<span class="fc" id="L13">        final JSONObject json = new JSONObject(config);</span>
+<span class="fc" id="L14">        builder.setMaxPlayers(json.getInt(ModelBuilderInterface.CFG_MAX_PLAYERS));</span>
+<span class="fc" id="L15">        builder.setYears(json.getInt(ModelBuilderInterface.CFG_YEARS));</span>
+<span class="fc" id="L16">        builder.setDungeonSideLength(json.getInt(ModelBuilderInterface.CFG_DUNGEON_SIDELENGTH));</span>
+<span class="fc" id="L17">        builder.setInitialFood(json.optInt(ModelBuilderInterface.CFG_INITIAL_FOOD, 3));</span>
+<span class="fc" id="L18">        builder.setInitialGold(json.optInt(ModelBuilderInterface.CFG_INITIAL_GOLD, 3));</span>
+<span class="fc" id="L19">        builder.setInitialImps(json.optInt(ModelBuilderInterface.CFG_INITIAL_IMPS, 3));</span>
+<span class="fc" id="L20">        builder.setInitialEvilness(json.optInt(ModelBuilderInterface.CFG_INITIAL_EVILNESS, 5));</span>
+<span class="fc" id="L21">        final JSONArray monsters = json.getJSONArray(ModelBuilderInterface.CFG_MONSTERS);</span>
+<span class="fc bfc" id="L22" title="All 2 branches covered.">        for (int i = 0; i &lt; monsters.length(); i++) {</span>
+<span class="fc" id="L23">            ConfigParser.parseMonster(monsters.getJSONObject(i), builder);</span>
+        }
+<span class="fc" id="L25">        final JSONArray adventurers = json.getJSONArray(ModelBuilderInterface.CFG_ADVENTURERS);</span>
+<span class="fc bfc" id="L26" title="All 2 branches covered.">        for (int i = 0; i &lt; adventurers.length(); i++) {</span>
+<span class="fc" id="L27">            ConfigParser.parseAdventurer(adventurers.getJSONObject(i), builder);</span>
+        }
+<span class="fc" id="L29">        final JSONArray traps = json.getJSONArray(ModelBuilderInterface.CFG_TRAPS);</span>
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        for (int i = 0; i &lt; traps.length(); i++) {</span>
+<span class="fc" id="L31">            ConfigParser.parseTrap(traps.getJSONObject(i), builder);</span>
+        }
+<span class="fc" id="L33">        final JSONArray rooms = json.getJSONArray(ModelBuilderInterface.CFG_ROOMS);</span>
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        for (int i = 0; i &lt; rooms.length(); i++) {</span>
+<span class="fc" id="L35">            ConfigParser.parseRoom(rooms.getJSONObject(i), builder);</span>
+        }
+<span class="fc" id="L37">        final JSONArray spells = json.getJSONArray(ModelBuilderInterface.CFG_SPELL);</span>
+<span class="fc bfc" id="L38" title="All 2 branches covered.">        for (int i = 0; i &lt; spells.length(); i++) {</span>
+<span class="fc" id="L39">            ConfigParser.parseSpell(spells.getJSONObject(i), builder);</span>
+        }
+
+<span class="fc" id="L42">        return builder.build();</span>
+    }
+
+    private static &lt;M&gt; void parseMonster(final JSONObject json,
+                                         final ModelBuilderInterface&lt;M&gt; builder) {
+<span class="fc" id="L47">        final int id = json.getInt(ModelBuilderInterface.CFG_ID);</span>
+<span class="fc" id="L48">        final int hunger = json.optInt(ModelBuilderInterface.CFG_MONSTER_HUNGER);</span>
+<span class="fc" id="L49">        final int damage = json.getInt(ModelBuilderInterface.CFG_MONSTER_DAMAGE);</span>
+<span class="fc" id="L50">        final int evilness = json.optInt(ModelBuilderInterface.CFG_MONSTER_EVILNESS);</span>
+<span class="fc" id="L51">        final String attack = json.getString(ModelBuilderInterface.CFG_MONSTER_ATK_STRATEGY);</span>
+<span class="fc" id="L52">        builder.addMonster(id, hunger, damage, evilness, attack);</span>
+<span class="fc" id="L53">    }</span>
+
+    private static &lt;M&gt; void parseAdventurer(final JSONObject json,
+                                            final ModelBuilderInterface&lt;M&gt; builder) {
+<span class="fc" id="L57">        final int id = json.getInt(ModelBuilderInterface.CFG_ID);</span>
+<span class="fc" id="L58">        final int difficulty = json.getInt(ModelBuilderInterface.CFG_ADV_DIFFICULTY);</span>
+<span class="fc" id="L59">        final int healthPoints = json.getInt(ModelBuilderInterface.CFG_ADV_HEALTH_POINTS);</span>
+<span class="fc" id="L60">        final int healValue = json.optInt(ModelBuilderInterface.CFG_ADV_HEAL_VALUE);</span>
+<span class="fc" id="L61">        final int defuseValue = json.optInt(ModelBuilderInterface.CFG_ADV_DEFUSE_VALUE);</span>
+<span class="fc" id="L62">        final Number magicPoints = json.optNumber(ModelBuilderInterface.CFG_ADV_MAGIC_POINTS);</span>
+<span class="fc" id="L63">        final boolean charge = json.optBoolean(ModelBuilderInterface.CFG_ADV_CHARGE);</span>
+<span class="fc" id="L64">        builder.addAdventurer(id, difficulty, healthPoints, healValue, defuseValue, charge,</span>
+<span class="fc" id="L65">                transNumber(magicPoints));</span>
+<span class="fc" id="L66">    }</span>
+
+    private static &lt;M&gt; void parseTrap(final JSONObject json,
+                                      final ModelBuilderInterface&lt;M&gt; builder) {
+<span class="fc" id="L70">        final int id = json.getInt(ModelBuilderInterface.CFG_ID);</span>
+<span class="fc" id="L71">        final String attack = json.getString(ModelBuilderInterface.CFG_TRAP_ATK_STRATEGY);</span>
+<span class="fc" id="L72">        final int damage = json.getInt(ModelBuilderInterface.CFG_TRAP_DAMAGE);</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        if (json.has(ModelBuilderInterface.CFG_TRAP_TARGET)) {</span>
+<span class="fc" id="L74">            builder.addTrap(</span>
+<span class="fc" id="L75">                    id, attack, damage, json.getInt(ModelBuilderInterface.CFG_TRAP_TARGET));</span>
+        } else {
+<span class="fc" id="L77">            builder.addTrap(id, attack, damage);</span>
+        }
+<span class="fc" id="L79">    }</span>
+
+    private static &lt;M&gt; void parseRoom(final JSONObject json,
+                                      final ModelBuilderInterface&lt;M&gt; builder) {
+<span class="fc" id="L83">        final int id = json.getInt(ModelBuilderInterface.CFG_ID);</span>
+<span class="fc" id="L84">        final int activation = json.getInt(ModelBuilderInterface.CFG_ROOM_ACTIVATION);</span>
+<span class="fc" id="L85">        final String restriction = json.getString(ModelBuilderInterface.CFG_ROOM_RESTRICTION);</span>
+<span class="fc" id="L86">        final int food = json.optInt(ModelBuilderInterface.CFG_ROOM_FOOD);</span>
+<span class="fc" id="L87">        final int gold = json.optInt(ModelBuilderInterface.CFG_ROOM_GOLD);</span>
+<span class="fc" id="L88">        final int imps = json.optInt(ModelBuilderInterface.CFG_ROOM_IMPS);</span>
+<span class="fc" id="L89">        final int niceness = json.optInt(ModelBuilderInterface.CFG_ROOM_NICENESS);</span>
+<span class="fc" id="L90">        builder.addRoom(id, activation, restriction, food, gold, imps, niceness);</span>
+<span class="fc" id="L91">    }</span>
+
+    private static &lt;M&gt; void parseSpell(final JSONObject json,
+                                       final ModelBuilderInterface&lt;M&gt; builder) {
+
+<span class="fc" id="L96">        final int id = json.getInt(ModelBuilderInterface.CFG_ID);</span>
+<span class="fc" id="L97">        final String spellType = json.getString(ModelBuilderInterface.CFG_SPELL_SPELLTYPE);</span>
+<span class="fc" id="L98">        final String bidType = json.getString(ModelBuilderInterface.CFG_SPELL_BIDTYPE);</span>
+<span class="fc" id="L99">        final int slot = json.getInt(ModelBuilderInterface.CFG_SPELL_SLOT);</span>
+<span class="fc" id="L100">        final Number food = json.optNumber(ModelBuilderInterface.CFG_SPELL_FOOD);</span>
+<span class="fc" id="L101">        final Number gold = json.optNumber(ModelBuilderInterface.CFG_SPELL_GOLD);</span>
+<span class="fc" id="L102">        final Number healthPoints = json.optNumber(ModelBuilderInterface.CFG_SPELL_HEALTHPOINTS);</span>
+<span class="fc" id="L103">        final Number defuseValue = json.optNumber(ModelBuilderInterface.CFG_SPELL_DEFUSEVALUE);</span>
+<span class="fc" id="L104">        final Number healValue = json.optNumber(ModelBuilderInterface.CFG_SPELL_HEALVALUE);</span>
+<span class="fc" id="L105">        final String structureEffect =</span>
+<span class="fc" id="L106">                json.optString(ModelBuilderInterface.CFG_SPELL_STRUCTEFFECT);</span>
+<span class="fc" id="L107">        final String bidTypeBlocked =</span>
+<span class="fc" id="L108">                json.optString(ModelBuilderInterface.CFG_SPELL_BIDTYPEBLOCKED);</span>
+        //build the correct spell
+<span class="fc" id="L110">        final SpellType actualSpellType = SpellType.valueOf(spellType);</span>
+
+        //these booleans make sure that there's no other detail apart from what the spells
+        // require
+
+<span class="fc bfc" id="L115" title="All 6 branches covered.">        final boolean noOtherResource = healthPoints != null || defuseValue != null</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">                || healValue != null || !(&quot;&quot;.equals(structureEffect))</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">                || !(&quot;&quot;.equals(bidTypeBlocked));</span>
+
+<span class="fc bfc" id="L119" title="All 6 branches covered.">        final boolean noOtherBuff = food != null || gold != null || !(&quot;&quot;.equals(structureEffect))</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">                || !(&quot;&quot;.equals(bidTypeBlocked));</span>
+
+<span class="fc bfc" id="L122" title="All 10 branches covered.">        final boolean noOtherStructure = food != null || gold != null || healthPoints != null</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">                || defuseValue != null || healValue != null || !(&quot;&quot;.equals(bidTypeBlocked));</span>
+
+<span class="fc bfc" id="L125" title="All 10 branches covered.">        final boolean noOtherRoom = food != null || gold != null || healthPoints != null</span>
+<span class="fc bfc" id="L126" title="All 2 branches covered.">                || defuseValue != null || healValue != null || !(&quot;&quot;.equals(structureEffect))</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">                || !(&quot;&quot;.equals(bidTypeBlocked));</span>
+
+<span class="fc bfc" id="L129" title="All 10 branches covered.">        final boolean noOtherBidding = food != null || gold != null || healthPoints != null</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">                || defuseValue != null || healValue != null || !(&quot;&quot;.equals(structureEffect));</span>
+
+
+<span class="pc bpc" id="L133" title="1 of 6 branches missed.">        switch (actualSpellType) {</span>
+            case RESOURCE -&gt; {
+
+<span class="fc" id="L136">                builder.addResourceSpell(id, spellType, bidType, slot, transNumber(food),</span>
+<span class="fc" id="L137">                        transNumber(gold), noOtherResource);</span>
+<span class="fc" id="L138">            }</span>
+
+
+            case BUFF -&gt; {
+<span class="fc" id="L142">                builder.addBuffSpell(id, spellType, bidType, slot, transNumber(healthPoints),</span>
+<span class="fc" id="L143">                        transNumber(defuseValue), transNumber(healValue), noOtherBuff);</span>
+
+<span class="fc" id="L145">            }</span>
+
+            case STRUCTURE -&gt; {
+
+<span class="fc" id="L149">                builder.addStructuralSpell(id, spellType, bidType, slot, structureEffect,</span>
+                        noOtherStructure);
+<span class="fc" id="L151">            }</span>
+
+            case ROOM -&gt; {
+
+<span class="fc" id="L155">                builder.addRoomSpell(id, spellType, bidType, slot, noOtherRoom);</span>
+<span class="fc" id="L156">            }</span>
+
+            case BIDDING -&gt; {
+<span class="fc" id="L159">                builder.addBiddingSpell(id, spellType, bidType, slot, bidTypeBlocked,</span>
+                        noOtherBidding);
+<span class="fc" id="L161">            }</span>
+
+            default -&gt; {
+<span class="nc" id="L164">                throw new AssertionError(&quot;this kind of spell don't exist&quot;);</span>
+            }
+
+        }
+
+<span class="fc" id="L169">    }</span>
+
+    /**
+     * if the attribute == 0 change to -1, if number is null change to zero, if number is present,
+     * return it.
+     *
+     * @param number the attribute
+     * @return the value of the attribute of the spell
+     */
+
+    private static int transNumber(final Number number) {
+<span class="fc bfc" id="L180" title="All 2 branches covered.">        if (number != null) {</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">            if (number.intValue() == 0) {</span>
+<span class="fc" id="L182">                return -1;</span>
+            } else {
+<span class="fc" id="L184">                return number.intValue();</span>
+            }
+        }
+<span class="fc" id="L187">        return 0;</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

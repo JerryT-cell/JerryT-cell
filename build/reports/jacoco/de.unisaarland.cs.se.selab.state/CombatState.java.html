@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CombatState.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.state</a> &gt; <span class="el_source">CombatState.java</span></div><h1>CombatState.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.state;
+
+import de.unisaarland.cs.se.selab.ConnectionUtils;
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.commands.ActionResult;
+import de.unisaarland.cs.se.selab.model.Adventurer;
+import de.unisaarland.cs.se.selab.model.DefensiveMeasure;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Monster;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.model.dungeon.Coordinate;
+import de.unisaarland.cs.se.selab.model.dungeon.Dungeon;
+import de.unisaarland.cs.se.selab.model.dungeon.Tunnel;
+import de.unisaarland.cs.se.selab.spells.Spell;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+
+/**
+ * This state handles the combat for all players.
+ */
+<span class="nc bnc" id="L25" title="All 2 branches missed.">public final class CombatState extends State {</span>
+
+    private static final int EVILNESS_WHEN_CONQUERED = -1;
+    private static final int FATIGUE_DAMAGE = 2;
+
+    public CombatState(final Model model, final ConnectionWrapper connection) {
+<span class="nc" id="L31">        super(model, connection);</span>
+<span class="nc" id="L32">    }</span>
+
+    @Override
+    public State run() {
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        for (final Player player : model.getPlayers()) {</span>
+<span class="nc bnc" id="L37" title="All 2 branches missed.">            if (handleCombatForPlayer(player) == ActionResult.END_GAME) {</span>
+<span class="nc" id="L38">                return new EndGameState(this.model, this.connection);</span>
+            }
+<span class="nc" id="L40">        }</span>
+
+<span class="nc bnc" id="L42" title="All 2 branches missed.">        if (model.hasNextYear()) {</span>
+<span class="nc" id="L43">            return new BuildingState(this.model, this.connection);</span>
+        } else {
+<span class="nc" id="L45">            evaluateTitles();</span>
+<span class="nc" id="L46">            return new EndGameState(this.model, this.connection);</span>
+        }
+    }
+
+    /**
+     * Simulate all combat rounds for one player.
+     *
+     * @param player the player who does combat
+     * @return a result that indicates how the game should continue
+     */
+    private ActionResult handleCombatForPlayer(final Player player) {
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        while (model.hasNextRound()) {</span>
+<span class="nc" id="L58">            final Dungeon dungeon = player.getDungeon();</span>
+<span class="nc bnc" id="L59" title="All 4 branches missed.">            if (player.isAlive() &amp;&amp; dungeon.adventurersLeft()) {</span>
+<span class="nc" id="L60">                connection.sendNextRound(model.getRound());</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">                if (dungeon.isConquered()) {</span>
+<span class="nc" id="L62">                    prisonerFlees(player);</span>
+                } else {
+<span class="nc bnc" id="L64" title="All 2 branches missed.">                    if (fight(player) == ActionResult.END_GAME) {</span>
+<span class="nc" id="L65">                        return ActionResult.END_GAME;</span>
+                    }
+                }
+            }
+<span class="nc" id="L69">        }</span>
+<span class="nc" id="L70">        player.getDungeon().setArchmageLinus(false);</span>
+<span class="nc" id="L71">        player.removeAllSpellsToWithstand();</span>
+<span class="nc" id="L72">        return ActionResult.PROCEED;</span>
+    }
+
+    private void prisonerFlees(final Player player) {
+<span class="nc" id="L76">        final Dungeon dungeon = player.getDungeon();</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">        if (dungeon.getNumImprisonedAdventurers() &gt; 0) {</span>
+<span class="nc" id="L78">            connection.sendAdventurerFled(dungeon.freeAdventurer().getId());</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">            if (player.getEvilness() &gt; Player.MIN_EVILNESS) {</span>
+<span class="nc" id="L80">                player.changeEvilness(EVILNESS_WHEN_CONQUERED);</span>
+<span class="nc" id="L81">                connection.sendEvilnessChanged(player.getId(), EVILNESS_WHEN_CONQUERED);</span>
+            }
+        }
+<span class="nc" id="L84">    }</span>
+
+    /**
+     * Simulate a single combat round for a player.
+     *
+     * @param player the player who does combat
+     * @return a result that indicates how the game should continue
+     */
+    private ActionResult fight(final Player player) {
+        // Player can select a battleground.
+<span class="nc" id="L94">        connection.sendSetBattleGround(player.getId());</span>
+<span class="nc" id="L95">        final ActionResult battlegroundResult = ConnectionUtils.executePlayerCommand(</span>
+                model, connection, Phase.SET_BATTLEGROUND, player);
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        if (!player.isAlive()) {</span>
+<span class="nc" id="L98">            return battlegroundResult;</span>
+        }
+        // Player can place monsters or traps.
+<span class="nc" id="L101">        connection.sendDefendYourself(player.getId());</span>
+<span class="nc" id="L102">        final ActionResult defendResult =</span>
+<span class="nc" id="L103">                ConnectionUtils.executePlayerCommand(model, connection, Phase.COMBAT, player);</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (!player.isAlive()) {</span>
+<span class="nc" id="L105">            return defendResult;</span>
+        }
+
+        // casting of spells                       &lt;-change
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (player.roundSpellsPresent(model.getRound())) {</span>
+<span class="nc" id="L110">            final ActionResult resultOfSpell = dealWithSpells(player);</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">            if (resultOfSpell == ActionResult.END_GAME) {</span>
+<span class="nc" id="L112">                return ActionResult.END_GAME;</span>
+            }
+<span class="nc bnc" id="L114" title="All 2 branches missed.">            if (!player.isAlive()) {</span>
+<span class="nc" id="L115">                return resultOfSpell;</span>
+            }
+        }
+<span class="nc bnc" id="L118" title="All 4 branches missed.">        assert player.getDungeon().getBattleGround().isPresent();</span>
+<span class="nc" id="L119">        final Tunnel battleGround = player.getDungeon().getBattleGround().get();</span>
+
+<span class="nc bnc" id="L121" title="All 2 branches missed.">        if (battleGround.isConquered()) {</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">            if (battleGround.getTrap().isPresent()) {</span>
+<span class="nc" id="L123">                player.addTrap(battleGround.getTrap().get());</span>
+            }
+<span class="nc" id="L125">            adventurersConquer(player);</span>
+        } else {
+<span class="nc" id="L127">            damageAdventurers(player);</span>
+<span class="nc" id="L128">            adventurersConquer(player);</span>
+<span class="nc" id="L129">            priestsHeal(player.getDungeon().getAllAdventurers());</span>
+        }
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        for (final Adventurer ad : player.getDungeon().getAllAdventurers()) {</span>
+<span class="nc" id="L132">            ad.restoreOriginalValues();</span>
+<span class="nc" id="L133">        }</span>
+<span class="nc" id="L134">        return ActionResult.PROCEED;</span>
+    }
+
+    /**
+     * cast all spells that a player has to withstand
+     *
+     * @param player the player fighting
+     * @return ENDGAME if all players left,
+     * PROCEED is the game can proceed
+     */
+
+    private ActionResult dealWithSpells(final Player player) {
+<span class="nc" id="L146">        final List&lt;Adventurer&gt; adventurersInGame = player.getDungeon().getAllAdventurers();</span>
+<span class="nc" id="L147">        int magicPoints = 0;</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">        for (final Adventurer ad : adventurersInGame) {</span>
+<span class="nc" id="L149">            magicPoints += ad.getMagicPoints();</span>
+<span class="nc" id="L150">        }</span>
+        //if linus is present
+<span class="nc bnc" id="L152" title="All 2 branches missed.">        if (player.getDungeon().linusIsPresent()) {</span>
+<span class="nc" id="L153">            magicPoints += 3;</span>
+        }
+<span class="nc" id="L155">        final List&lt;Spell&gt; spellsToWithstand = player.spellsToWithstand(model.getRound());</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        for (final Spell spells : spellsToWithstand) {</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">            if (magicPoints &gt;= spells.getMagicPointsNeeded()) {</span>
+
+<span class="nc bnc" id="L159" title="All 2 branches missed.">                if (spells.cast(player.getId(), model, connection) == ActionResult.END_GAME) {</span>
+<span class="nc" id="L160">                    return ActionResult.END_GAME;</span>
+                }
+            }
+<span class="nc" id="L163">        }</span>
+
+<span class="nc" id="L165">        return ActionResult.PROCEED;</span>
+
+    }
+
+
+    private void priestsHeal(final Iterable&lt;Adventurer&gt; adventurers) {
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        for (final Adventurer healer : adventurers) {</span>
+<span class="nc" id="L172">            int healValue = healer.getHealValue();</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">            for (final Adventurer target : adventurers) {</span>
+<span class="nc" id="L174">                final int healed = target.heal(healValue);</span>
+<span class="nc" id="L175">                healValue -= healed;</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">                if (healed &gt; 0) {</span>
+<span class="nc" id="L177">                    connection.sendAdventurerHealed(healer.getId(), target.getId(), healed);</span>
+                }
+<span class="nc" id="L179">            }</span>
+<span class="nc" id="L180">        }</span>
+<span class="nc" id="L181">    }</span>
+
+    private void adventurersConquer(final Player player) {
+<span class="nc" id="L184">        final Dungeon dungeon = player.getDungeon();</span>
+<span class="nc" id="L185">        final Optional&lt;Tunnel&gt; battleGround = dungeon.getBattleGround();</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        if (battleGround.isPresent()) {</span>
+<span class="nc" id="L187">            final Optional&lt;Adventurer&gt; attacker = dungeon.getAdventurer(1);</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">            if (attacker.isPresent()) {</span>
+<span class="nc" id="L189">                dungeon.conquer();</span>
+<span class="nc" id="L190">                final Coordinate coordinate = battleGround.get().getCoordinate();</span>
+<span class="nc" id="L191">                connection.sendTunnelConquered(attacker.get().getId(), coordinate);</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">                if (player.getEvilness() &gt; Player.MIN_EVILNESS) {</span>
+<span class="nc" id="L193">                    player.changeEvilness(EVILNESS_WHEN_CONQUERED);</span>
+<span class="nc" id="L194">                    connection.sendEvilnessChanged(player.getId(), EVILNESS_WHEN_CONQUERED);</span>
+                }
+            }
+<span class="nc" id="L197">            battleGround.get().clearDefenders();</span>
+        }
+<span class="nc" id="L199">    }</span>
+
+    private void damageAdventurers(final Player player) {
+<span class="nc" id="L202">        final Dungeon dungeon = player.getDungeon();</span>
+<span class="nc" id="L203">        final Optional&lt;Tunnel&gt; battleGround = dungeon.getBattleGround();</span>
+<span class="nc bnc" id="L204" title="All 2 branches missed.">        if (battleGround.isPresent()) {</span>
+<span class="nc" id="L205">            final int reduction = dungeon.getAllAdventurers()</span>
+<span class="nc" id="L206">                    .stream()</span>
+<span class="nc" id="L207">                    .map(Adventurer::getDefuseValue)</span>
+<span class="nc" id="L208">                    .reduce(0, Integer::sum);</span>
+            // Damage from trap if there is one.
+<span class="nc" id="L210">            battleGround.get().getTrap()</span>
+<span class="nc" id="L211">                    .ifPresent(trap -&gt; evaluateDefense(trap, player, reduction));</span>
+            // Damage from placed monsters.
+<span class="nc" id="L213">            int result = -1;</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">            for (final Monster monster : battleGround.get().getMonsters()) {</span>
+<span class="nc" id="L215">                result = evaluateDefense(monster, player, 0);</span>
+<span class="nc" id="L216">            }</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">            if (result != 1) {</span>
+<span class="nc" id="L218">                final int finalResult = result;</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">                battleGround.get().getMonsters().removeIf(m -&gt; m.getId() == finalResult);</span>
+            }
+        }
+        // Deal fatigue damage
+<span class="nc bnc" id="L223" title="All 2 branches missed.">        for (final Adventurer adventurer : dungeon.getAllAdventurers()) {</span>
+<span class="nc bnc" id="L224" title="All 2 branches missed.">            if (dungeon.linusIsPresent()) {</span>
+<span class="nc" id="L225">                hurtAdventurer(adventurer, player, 1);</span>
+            } else {
+<span class="nc" id="L227">                hurtAdventurer(adventurer, player, CombatState.FATIGUE_DAMAGE);</span>
+            }
+<span class="nc" id="L229">        }</span>
+<span class="nc" id="L230">    }</span>
+
+    //changed to int. return value is -1 if no monster is removed, not -1 if a monster is removed
+    private int evaluateDefense(final DefensiveMeasure defense, final Player player,
+                                final int totalReduction) {
+<span class="nc" id="L235">        int result = -1;</span>
+<span class="nc" id="L236">        final Dungeon dungeon = player.getDungeon();</span>
+<span class="nc bnc" id="L237" title="All 4 branches missed.">        switch (defense.getAttackStrategy()) {</span>
+            case BASIC -&gt; {
+<span class="nc" id="L239">                final int reducedDamage = Math.max(0, defense.getDamage() - totalReduction);</span>
+<span class="nc" id="L240">                final Optional&lt;Adventurer&gt; attacker = dungeon.getAdventurer(1);</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">                if (attacker.isPresent()) {</span>
+<span class="nc" id="L242">                    result = hurtAdventurer(attacker.get(), player,</span>
+                            reducedDamage);
+                }
+<span class="nc" id="L245">            }</span>
+            case MULTI -&gt; {
+<span class="nc" id="L247">                int alreadyReduced = 0;</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">                for (final Adventurer adventurer : dungeon.getAllAdventurers()) {</span>
+<span class="nc" id="L249">                    final int reductionLeft = totalReduction - alreadyReduced;</span>
+<span class="nc" id="L250">                    result = hurtAdventurer(adventurer, player,</span>
+<span class="nc" id="L251">                            Math.max(defense.getDamage() - reductionLeft, 0));</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">                    if (result != -1) {</span>
+<span class="nc" id="L253">                        return result;</span>
+                    }
+<span class="nc" id="L255">                    alreadyReduced += Math.min(defense.getDamage(), reductionLeft);</span>
+<span class="nc" id="L256">                }</span>
+<span class="nc" id="L257">            }</span>
+            case TARGETED -&gt; {
+<span class="nc bnc" id="L259" title="All 2 branches missed.">                if (defense.hasTarget()) {</span>
+<span class="nc" id="L260">                    final int reducedDamage = Math.max(0, defense.getDamage() - totalReduction);</span>
+<span class="nc" id="L261">                    final Optional&lt;Adventurer&gt; attacker =</span>
+<span class="nc" id="L262">                            dungeon.getAdventurer(defense.getTarget());</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">                    if (attacker.isPresent()) {</span>
+<span class="nc" id="L264">                        result = hurtAdventurer(attacker.get(), player,</span>
+                                reducedDamage);
+                    }
+                    // attacker.ifPresent(adventurer -&gt; hurtAdventurer(adventurer, player,
+                    //       reducedDamage));
+<span class="nc" id="L269">                }</span>
+            }
+            default -&gt; {
+            }
+        }
+<span class="nc" id="L274">        return result;</span>
+    }
+
+    //changed to int. return value is -1 if no monster is removed, not -1 if a monster is removed
+    private int hurtAdventurer(final Adventurer adventurer, final Player player,
+                               final int damage) {
+<span class="nc" id="L280">        final int effectiveDamage = adventurer.damage(damage);</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        if (effectiveDamage &gt; 0) {</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">            if (adventurer.isDefeated()) {</span>
+<span class="nc" id="L283">                player.getDungeon().imprisonAdventurer(adventurer);</span>
+<span class="nc" id="L284">                connection.sendAdventurerImprisoned(adventurer.getId());</span>
+<span class="nc" id="L285">                return handleLinus(adventurer, player);</span>
+            } else {
+<span class="nc" id="L287">                connection.sendAdventurerDamaged(adventurer.getId(), effectiveDamage);</span>
+            }
+        }
+<span class="nc" id="L290">        return -1;</span>
+    }
+    //changed to int. return value is -1 if no monster is removed, not -1 if a monster is removed
+
+    private int handleLinus(final Adventurer adventurer, final Player player) {
+<span class="nc bnc" id="L295" title="All 4 branches missed.">        if (adventurer.getMagicPoints() == 0 || player.getDungeon().linusIsPresent()) {</span>
+<span class="nc" id="L296">            return -1;</span>
+        }
+<span class="nc" id="L298">        int monsterId = -1;</span>
+<span class="nc" id="L299">        final Dungeon dungeon = player.getDungeon();</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">        if (dungeon.probabilityLinusArrive(player, model)) {</span>
+<span class="nc" id="L301">            dungeon.setArchmageLinus(true);</span>
+<span class="nc" id="L302">            dungeon.increasePenguinVisit();</span>
+<span class="nc" id="L303">            connection.sendArchmageArrived(player.getId());</span>
+            //remove monsters
+<span class="nc bnc" id="L305" title="All 2 branches missed.">            if (player.getMonsters().size() &gt; 0) {</span>
+<span class="nc" id="L306">                final List&lt;Monster&gt; monsters = player.getMonsters();</span>
+<span class="nc" id="L307">                final int randomIndex = model.getRandomObject().nextInt(monsters.size());</span>
+<span class="nc" id="L308">                final Monster monster = monsters.remove(randomIndex);</span>
+<span class="nc" id="L309">                connection.sendMonsterRemoved(player.getId(), monster.getId());</span>
+                //also remove in tunnel if present
+<span class="nc bnc" id="L311" title="All 4 branches missed.">                assert dungeon.getBattleGround().isPresent();</span>
+<span class="nc" id="L312">                final Tunnel battleGround = dungeon.getBattleGround().get();</span>
+<span class="nc" id="L313">                final List&lt;Monster&gt; battleGroundMonsterList = battleGround.getMonsters().stream()</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">                        .filter(m -&gt; m.getId() == monster.getId()).toList();</span>
+
+<span class="nc bnc" id="L316" title="All 2 branches missed.">                if (!battleGroundMonsterList.isEmpty()) {</span>
+<span class="nc" id="L317">                    monsterId = battleGroundMonsterList.get(0).getId();</span>
+                }
+<span class="nc bnc" id="L319" title="All 2 branches missed.">                if (dungeon.getAllAdventurers().isEmpty()) {</span>
+<span class="nc" id="L320">                    dungeon.setArchmageLinus(false);</span>
+                }
+            }
+        }
+<span class="nc" id="L324">        return monsterId;</span>
+    }
+
+
+    /**
+     * Calculates player scores and awards titles at the end of a game.
+     */
+    private void evaluateTitles() {
+<span class="nc" id="L332">        final List&lt;Player&gt; players = model.getPlayers();</span>
+
+        // Scoring individual points
+<span class="nc bnc" id="L335" title="All 2 branches missed.">        for (final Player player : players) {</span>
+            // 1 point per monster.
+<span class="nc" id="L337">            player.changeScorePoints(player.getMonsters().size());</span>
+            // 2 points per room.
+<span class="nc" id="L339">            player.changeScorePoints(2 * player.getDungeon().getGraph().getNumRooms());</span>
+            // -2 points per conquered tunnel! tile.
+<span class="nc" id="L341">            player.changeScorePoints(</span>
+<span class="nc" id="L342">                    -2 * (int) player.getDungeon().getGraph().stream()</span>
+<span class="nc bnc" id="L343" title="All 4 branches missed.">                            .filter(tunnel -&gt; tunnel.isConquered() &amp;&amp; !tunnel.isRoom())</span>
+<span class="nc" id="L344">                            .count());</span>
+            // 2 points per imprisoned adventurer.
+<span class="nc" id="L346">            player.changeScorePoints(2 * player.getDungeon().getNumImprisonedAdventurers());</span>
+<span class="nc" id="L347">        }</span>
+
+        // Define all titles.
+<span class="nc" id="L350">        final List&lt;Function&lt;Player, Integer&gt;&gt; titles = new ArrayList&lt;&gt;();      // The Lord of ...</span>
+<span class="nc" id="L351">        titles.add(Player::getEvilness);                                       // Dark Deeds</span>
+<span class="nc" id="L352">        titles.add(player -&gt; player.getDungeon().getGraph().getNumRooms());    // Halls</span>
+<span class="nc" id="L353">        titles.add(player -&gt; player.getDungeon().getGraph().getNumTunnels());  // Tunnels</span>
+<span class="nc" id="L354">        titles.add(player -&gt; player.getMonsters().size());                     // Monsters</span>
+<span class="nc" id="L355">        titles.add(Player::getImps);                                           // Imps</span>
+<span class="nc" id="L356">        titles.add(player -&gt; player.getGold() + player.getFood());             // Riches</span>
+<span class="nc" id="L357">        titles.add(player -&gt; player.getDungeon().getNumUnconqueredTiles());    // Battle</span>
+<span class="nc" id="L358">        titles.add(Player::getWithstoodSpells);                                // magic Proof</span>
+<span class="nc" id="L359">        titles.add(player -&gt; player.getDungeon().getPenguinVisits());          //penguinVisit</span>
+<span class="nc" id="L360">        titles.add(Player::getCounteredSpells);                                //counter Strike</span>
+
+
+        // Evaluate all titles.
+<span class="nc bnc" id="L364" title="All 2 branches missed.">        for (final Function&lt;Player, Integer&gt; title : titles) {</span>
+<span class="nc" id="L365">            processTitle(players, title);</span>
+<span class="nc" id="L366">        }</span>
+
+        // Find winner.
+<span class="nc" id="L369">        final Optional&lt;Player&gt; optWinner =</span>
+<span class="nc" id="L370">                players.stream().max(Comparator.comparing(Player::getScorePoints));</span>
+
+<span class="nc bnc" id="L372" title="All 2 branches missed.">        if (optWinner.isPresent()) {</span>
+<span class="nc" id="L373">            final int highestScore = optWinner.get().getScorePoints();</span>
+<span class="nc bnc" id="L374" title="All 2 branches missed.">            for (final Player player : model.getPlayers()) {</span>
+<span class="nc bnc" id="L375" title="All 2 branches missed.">                if (player.getScorePoints() == highestScore) {</span>
+<span class="nc" id="L376">                    connection.sendGameEnd(player.getId(), highestScore);</span>
+                }
+<span class="nc" id="L378">            }</span>
+        }
+<span class="nc" id="L380">    }</span>
+
+    private void processTitle(final Collection&lt;Player&gt; players,
+                              final Function&lt;Player, Integer&gt; title) {
+<span class="nc" id="L384">        final Optional&lt;Player&gt; optWinner = players.stream()</span>
+<span class="nc" id="L385">                .max(Comparator.comparing(title));</span>
+<span class="nc bnc" id="L386" title="All 2 branches missed.">        if (optWinner.isPresent()) {</span>
+<span class="nc" id="L387">            final int highestScore = title.apply(optWinner.get());</span>
+<span class="nc" id="L388">            int amountOfWinners = 0;</span>
+<span class="nc bnc" id="L389" title="All 2 branches missed.">            for (final Player player : players) {</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">                if (title.apply(player) == highestScore) {</span>
+<span class="nc" id="L391">                    amountOfWinners++;</span>
+<span class="nc" id="L392">                    player.changeScorePoints(2);</span>
+                }
+<span class="nc" id="L394">            }</span>
+<span class="nc bnc" id="L395" title="All 2 branches missed.">            if (amountOfWinners == 1) {</span>
+<span class="nc" id="L396">                optWinner.get().changeScorePoints(1);</span>
+            }
+        }
+<span class="nc" id="L399">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

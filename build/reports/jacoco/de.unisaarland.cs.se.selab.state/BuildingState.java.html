@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BuildingState.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.state</a> &gt; <span class="el_source">BuildingState.java</span></div><h1>BuildingState.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.state;
+
+import de.unisaarland.cs.se.selab.ConnectionUtils;
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.comm.BidType;
+import de.unisaarland.cs.se.selab.comm.TimeoutException;
+import de.unisaarland.cs.se.selab.commands.ActionResult;
+import de.unisaarland.cs.se.selab.commands.Command;
+import de.unisaarland.cs.se.selab.commands.LeaveCommand;
+import de.unisaarland.cs.se.selab.model.Adventurer;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Monster;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.model.dungeon.Room;
+import de.unisaarland.cs.se.selab.model.dungeon.Tunnel;
+import de.unisaarland.cs.se.selab.spells.Spell;
+import de.unisaarland.cs.se.selab.state.bids.Bid;
+import de.unisaarland.cs.se.selab.state.bids.SpellBid;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * This state handles one complete building phase including bid placement and evaluation.
+ */
+public final class BuildingState extends State {
+
+    public static final int ROOMS_PER_ROUND = 2;
+    public static final int MONSTERS_PER_ROUND = 3;
+    public static final int NO_SUPERVISION_LIMIT = 3;
+    public static final int SPELLS_PER_ROUND = 3;
+
+    public BuildingState(final Model model, final ConnectionWrapper connection) {
+<span class="nc" id="L38">        super(model, connection);</span>
+<span class="nc" id="L39">    }</span>
+
+    @Override
+    public State run() {
+<span class="nc" id="L43">        connection.sendNextYear(model.getYear());</span>
+
+        // Reset all players bids, monsters, adventurers.
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        for (final Player player : model.getPlayers()) {</span>
+<span class="nc" id="L47">            player.getLockedTypes()</span>
+<span class="nc" id="L48">                    .forEach(type -&gt; connection.sendBidRetrieved(player.getId(), type));</span>
+<span class="nc" id="L49">            player.unlockBidTypes();</span>
+<span class="nc" id="L50">            player.wakeUpMonsters();</span>
+<span class="nc" id="L51">            player.getDungeon().clearAdventurers();</span>
+<span class="nc" id="L52">        }</span>
+
+<span class="nc bnc" id="L54" title="All 2 branches missed.">        while (model.hasNextRound()) {</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">            if (!handleSeason()) {</span>
+<span class="nc" id="L56">                return new EndGameState(this.model, this.connection);</span>
+            }
+        }
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        for (final Player player : model.getPlayers()) {</span>
+<span class="nc" id="L60">            player.buildingEnd();</span>
+<span class="nc" id="L61">        }</span>
+<span class="nc" id="L62">        return new CombatState(this.model, this.connection);</span>
+    }
+
+    /**
+     * Contains the logic for handling one season.
+     *
+     * @return {@code true} if the game should continue or {@code false} if all players left and the
+     * game should exit
+     */
+    private boolean handleSeason() {
+<span class="nc" id="L72">        connection.sendNextRound(model.getRound());</span>
+        // Draw new adventurers, monsters and rooms.
+<span class="nc" id="L74">        drawCards();</span>
+
+        // Let players place their orders.
+<span class="nc" id="L77">        connection.sendBiddingStarted();</span>
+<span class="nc" id="L78">        connection.sendActNow();</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        if (!playersBid()) {</span>
+<span class="nc" id="L80">            return false;</span>
+        }
+
+        // Place bids on bidding square and evaluate them.
+<span class="nc" id="L84">        final Map&lt;BidType, List&lt;Bid&gt;&gt; biddingSquare = placeBids(model.getPlayersFromStarting());</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        if (!evaluateBids(biddingSquare)) {</span>
+<span class="nc" id="L86">            return false;</span>
+        }
+
+<span class="nc" id="L89">        lockAndUnlockBids(model.getPlayers());</span>
+<span class="nc" id="L90">        returnMiningImps(model.getPlayers());</span>
+<span class="nc" id="L91">        returnRoomImps(model.getPlayers());</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (model.getRound() &lt; Model.MAX_ROUNDS) {</span>
+<span class="nc" id="L93">            spreadAdventurersToPlayers();</span>
+        }
+<span class="nc" id="L95">        model.seasonalCleanup();</span>
+        // Next round another player is first.
+<span class="nc" id="L97">        model.nextPlayer();</span>
+<span class="nc" id="L98">        return true;</span>
+    }
+
+    /**
+     * Collect all player bids.
+     *
+     * @return {@code true} if the game should continue or {@code false} if all players left and the
+     * game should exit
+     */
+    private boolean playersBid() {
+<span class="nc" id="L108">        final List&lt;Player&gt; players = model.getPlayers();</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        while (players.stream().anyMatch(Player::hasToBid)) {</span>
+            try {
+<span class="nc" id="L111">                final Command command = connection.nextAction();</span>
+<span class="nc" id="L112">                final int sender = command.getId();</span>
+<span class="nc" id="L113">                final ActionResult result =</span>
+<span class="nc" id="L114">                        command.execute(model, connection, Phase.BUILDING);</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">                if (model.hasPlayer(sender)</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">                        &amp;&amp; model.getPlayerById(sender).hasToBid()) {</span>
+<span class="nc" id="L117">                    connection.sendActNow(sender);</span>
+                }
+                // return if last player has left
+<span class="nc bnc" id="L120" title="All 2 branches missed.">                if (result == ActionResult.END_GAME) {</span>
+<span class="nc" id="L121">                    return false;</span>
+                }
+<span class="nc" id="L123">            } catch (final TimeoutException exception) {</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">                if (players.stream().anyMatch(Player::finishedBidding)) {</span>
+<span class="nc" id="L125">                    kickUnfinishedPlayers();</span>
+                } else {
+<span class="nc" id="L127">                    return false;</span>
+                }
+<span class="nc" id="L129">            }</span>
+        }
+<span class="nc" id="L131">        return true;</span>
+    }
+
+    private void kickUnfinishedPlayers() {
+<span class="nc" id="L135">        model.getPlayers().stream()</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">                .filter(player -&gt; !player.finishedBidding())</span>
+<span class="nc" id="L137">                .forEach(player -&gt; new LeaveCommand(player.getId())</span>
+<span class="nc" id="L138">                        .execute(model, connection, Phase.BUILDING));</span>
+<span class="nc" id="L139">    }</span>
+
+    /**
+     * Place a single bid on the bidding square.
+     *
+     * @param bidType       the bidType of the bid to place
+     * @param player        the player who placed the bid
+     * @param biddingSquare the bidding square
+     */
+    private void addBid(final BidType bidType, final Player player, final Map&lt;BidType,
+            List&lt;Bid&gt;&gt; biddingSquare) {
+<span class="nc" id="L150">        final List&lt;Bid&gt; bidList = biddingSquare.getOrDefault(bidType, new ArrayList&lt;&gt;());</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        if (bidList.size() &lt; 3) {</span>
+<span class="nc" id="L152">            final Bid bid = Bid.createBid(bidType, player, bidList.size() + 1);</span>
+<span class="nc" id="L153">            bidList.add(bid);</span>
+<span class="nc" id="L154">            biddingSquare.put(bidType, bidList);</span>
+        }
+<span class="nc" id="L156">    }</span>
+
+    /**
+     * Place the player bids on the bidding square.
+     *
+     * @param players the players who made bids this round
+     */
+    private Map&lt;BidType, List&lt;Bid&gt;&gt; placeBids(final Collection&lt;Player&gt; players) {
+<span class="nc" id="L164">        final Map&lt;BidType, List&lt;Bid&gt;&gt; biddingSquare = new EnumMap&lt;&gt;(BidType.class);</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">        for (int index = 0; index &lt; Model.BID_LIMIT; index++) {</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">            for (final Player player : players) {</span>
+                //first bid of all players, index = 0
+<span class="nc" id="L168">                addBid(player.getPlacedBidTypes().get(index), player, biddingSquare);</span>
+<span class="nc" id="L169">            }</span>
+        }
+<span class="nc" id="L171">        return biddingSquare;</span>
+    }
+
+    /**
+     * Evaluate all bids.
+     * and decorate bids with spells
+     *
+     * @return {@code true} if the game should continue or {@code false} if all players left and the
+     * game should exit
+     */
+    public boolean evaluateBids(final Map&lt;BidType, List&lt;Bid&gt;&gt; biddingSquare) {
+
+<span class="nc bnc" id="L183" title="All 2 branches missed.">        for (final BidType type : BidType.values()) {</span>
+<span class="nc" id="L184">            final Optional&lt;List&lt;Bid&gt;&gt; bidsOfType = Optional.ofNullable(biddingSquare.get(type));</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">            if (bidsOfType.isPresent()) {</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">                for (final Bid bid : bidsOfType.get()) {</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">                    if (!evaluateBid(bid, type)) {</span>
+<span class="nc" id="L188">                        return false;</span>
+                    }
+<span class="nc" id="L190">                }</span>
+            }
+        }
+<span class="nc" id="L193">        return true;</span>
+    }
+
+    /**
+     * evaluate a single bid and decorate with spells
+     *
+     * @param bid  bid to evaluate
+     * @param type bidType of evaluation
+     * @return false if the game must end( all players left)
+     */
+    private boolean evaluateBid(final Bid bid, final BidType type) {
+<span class="nc" id="L204">        final List&lt;Spell&gt; spellToTrigger = model.getAvailableSpell(type, bid.getSlot());</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        if (!(spellToTrigger.isEmpty())) {</span>
+<span class="nc" id="L206">            final Bid spellBid = new SpellBid(bid, spellToTrigger);</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">            if (spellBid.evaluate(model, connection) == ActionResult.END_GAME) {</span>
+<span class="nc" id="L208">                return false;</span>
+            }
+<span class="nc" id="L210">            model.removeAvailableSpell(spellToTrigger);</span>
+<span class="nc" id="L211">        } else {</span>
+<span class="nc bnc" id="L212" title="All 2 branches missed.">            return bid.evaluate(model, connection) != ActionResult.END_GAME;</span>
+        }
+<span class="nc" id="L214">        return true;</span>
+    }
+
+    private void lockAndUnlockBids(final Iterable&lt;Player&gt; players) {
+<span class="nc bnc" id="L218" title="All 2 branches missed.">        for (final Player player : players) {</span>
+            // Unlock previously locked BidTypes.
+<span class="nc bnc" id="L220" title="All 2 branches missed.">            for (final BidType type : player.getLockedTypes()) {</span>
+<span class="nc" id="L221">                connection.sendBidRetrieved(player.getId(), type);</span>
+<span class="nc" id="L222">            }</span>
+            // Lock or return currently used BitTypes.
+<span class="nc" id="L224">            player.unlockBidTypes();</span>
+<span class="nc" id="L225">            connection.sendBidRetrieved(player.getId(), player.getPlacedBidTypes().get(0));</span>
+<span class="nc" id="L226">            player.lockBidTypes();</span>
+<span class="nc" id="L227">            player.clearBidTypes();</span>
+
+<span class="nc" id="L229">        }</span>
+<span class="nc" id="L230">    }</span>
+
+    private void returnMiningImps(final Iterable&lt;Player&gt; players) {
+<span class="nc bnc" id="L233" title="All 2 branches missed.">        for (final Player player : players) {</span>
+<span class="nc" id="L234">            final int minedGold = (int) player.getDungeon().getGraph().stream()</span>
+<span class="nc" id="L235">                    .filter(Tunnel::hasGoldMiningImp)</span>
+<span class="nc" id="L236">                    .count();</span>
+<span class="nc" id="L237">            final int returnedImps = player.getDungeon().returnMiners();</span>
+<span class="nc bnc" id="L238" title="All 2 branches missed.">            if (returnedImps &gt; 0) {</span>
+<span class="nc" id="L239">                player.changeImps(returnedImps);</span>
+<span class="nc" id="L240">                connection.sendImpsChanged(player.getId(), returnedImps);</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">                if (minedGold &gt; 0) {</span>
+<span class="nc" id="L242">                    ConnectionUtils.changeGold(player, minedGold, connection);</span>
+                }
+            }
+<span class="nc" id="L245">        }</span>
+<span class="nc" id="L246">    }</span>
+
+    private void returnRoomImps(final Iterable&lt;Player&gt; players) {
+<span class="nc bnc" id="L249" title="All 2 branches missed.">        for (final Player player : players) {</span>
+<span class="nc bnc" id="L250" title="All 2 branches missed.">            for (final Room room : player.getDungeon().getGraph().getRooms()) {</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">                if (room.isActivated()) {</span>
+<span class="nc" id="L252">                    final int returnedImps = room.returnImps();</span>
+<span class="nc" id="L253">                    player.changeImps(returnedImps);</span>
+<span class="nc" id="L254">                    connection.sendImpsChanged(player.getId(), returnedImps);</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">                    for (final BidType type : BidType.values()) {</span>
+<span class="nc" id="L256">                        final Optional&lt;Integer&gt; production = room.getProduction(type);</span>
+<span class="nc" id="L257">                        production.ifPresent(prod -&gt; evaluateRoomProduction(player, prod, type));</span>
+                    }
+                }
+<span class="nc" id="L260">            }</span>
+<span class="nc" id="L261">        }</span>
+<span class="nc" id="L262">    }</span>
+
+    private void evaluateRoomProduction(final Player player, final int amount, final BidType type) {
+<span class="nc bnc" id="L265" title="All 5 branches missed.">        switch (type) {</span>
+<span class="nc" id="L266">            case FOOD -&gt; ConnectionUtils.changeFood(player, amount, connection);</span>
+<span class="nc" id="L267">            case GOLD -&gt; ConnectionUtils.changeGold(player, amount, connection);</span>
+<span class="nc" id="L268">            case NICENESS -&gt; ConnectionUtils.changeEvilness(player, -amount, connection);</span>
+<span class="nc" id="L269">            case IMPS -&gt; ConnectionUtils.changeImps(player, amount, connection);</span>
+            default -&gt; {
+            }
+        }
+<span class="nc" id="L273">    }</span>
+
+    private void drawCards() {
+        // Draw adventurers from stack (but not in the last round)
+<span class="nc bnc" id="L277" title="All 2 branches missed.">        if (model.getRound() != Model.MAX_ROUNDS) {</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">            for (int i = 0; i &lt; model.getPlayers().size(); i++) {</span>
+<span class="nc" id="L279">                final Adventurer adventurer = model.drawAdventurer();</span>
+<span class="nc" id="L280">                connection.sendAdventurerDrawn(adventurer.getId());</span>
+            }
+        }
+        // Draw monsters from stack
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        for (int i = 0; i &lt; MONSTERS_PER_ROUND; i++) {</span>
+<span class="nc" id="L285">            final Monster monster = model.drawMonster();</span>
+<span class="nc" id="L286">            connection.sendMonsterDrawn(monster.getId());</span>
+        }
+
+        // Draw rooms from stack
+<span class="nc bnc" id="L290" title="All 2 branches missed.">        for (int i = 0; i &lt; ROOMS_PER_ROUND; i++) {</span>
+<span class="nc" id="L291">            final Room room = model.drawRoom();</span>
+<span class="nc" id="L292">            connection.sendRoomDrawn(room.getId());</span>
+        }
+
+        // Draw spells
+<span class="nc bnc" id="L296" title="All 2 branches missed.">        for (int i = 0; i &lt; SPELLS_PER_ROUND; i++) {</span>
+<span class="nc" id="L297">            final Spell spell = model.drawSpell();</span>
+<span class="nc" id="L298">            connection.sendSpellDrawn(spell.getId());</span>
+        }
+<span class="nc" id="L300">    }</span>
+
+    private void spreadAdventurersToPlayers() {
+<span class="nc" id="L303">        model.getPlayers().stream()</span>
+<span class="nc" id="L304">                .sorted(Comparator.comparing(Player::getEvilness).thenComparing(Player::getId))</span>
+<span class="nc" id="L305">                .forEach(player -&gt; {</span>
+<span class="nc" id="L306">                    final Adventurer adventurer = model.popAdventurer();</span>
+<span class="nc" id="L307">                    player.getDungeon().addAdventurer(adventurer);</span>
+<span class="nc" id="L308">                    connection.sendAdventurerArrived(player.getId(), adventurer.getId());</span>
+<span class="nc" id="L309">                });</span>
+<span class="nc" id="L310">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

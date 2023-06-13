@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PreGameState.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.state</a> &gt; <span class="el_source">PreGameState.java</span></div><h1>PreGameState.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.state;
+
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.model.Model;
+
+/**
+ * This state initializes the game model with the registered players.
+ */
+public final class PreGameState extends State {
+
+    public PreGameState(final Model model, final ConnectionWrapper connection) {
+<span class="nc" id="L12">        super(model, connection);</span>
+<span class="nc" id="L13">    }</span>
+
+    @Override
+    public State run() {
+<span class="nc" id="L17">        connection.sendGameStarted();</span>
+<span class="nc" id="L18">        model.shuffleCards();</span>
+<span class="nc" id="L19">        model.getPlayers()</span>
+<span class="nc" id="L20">                .forEach(player -&gt; connection.sendPlayer(player.getId(), player.getName()));</span>
+<span class="nc" id="L21">        return new BuildingState(this.model, this.connection);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

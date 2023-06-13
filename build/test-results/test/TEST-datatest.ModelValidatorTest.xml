@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="datatest.ModelValidatorTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2022-10-21T21:33:06" hostname="LAPTOP-0TK1TNTG" time="0.076">
+  <properties/>
+  <testcase name="structuralSpell()" classname="datatest.ModelValidatorTest" time="0.049"/>
+  <testcase name="buffSpellTest()" classname="datatest.ModelValidatorTest" time="0.003"/>
+  <testcase name="resourceSpellTest()" classname="datatest.ModelValidatorTest" time="0.004"/>
+  <testcase name="adventurerTest()" classname="datatest.ModelValidatorTest" time="0.003"/>
+  <testcase name="biddingSpellTest()" classname="datatest.ModelValidatorTest" time="0.001"/>
+  <testcase name="roomSpellTest()" classname="datatest.ModelValidatorTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

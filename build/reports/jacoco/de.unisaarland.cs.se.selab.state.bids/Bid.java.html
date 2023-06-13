@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Bid.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.state.bids</a> &gt; <span class="el_source">Bid.java</span></div><h1>Bid.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.state.bids;
+
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.comm.BidType;
+import de.unisaarland.cs.se.selab.commands.ActionResult;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Player;
+
+/**
+ * Superclass for all bid types.
+ * &lt;p&gt;
+ * Bids are implemented with a command pattern.
+ * Bids are created by the factory function {@link Bid#createBid(BidType, Player, int)}.
+ * The function {@link Bid#evaluate(Model, ConnectionWrapper)} is the command pattern's
+ * {@code execute()} function.
+ * Here, it performs some general checks and then calls the function
+ * {@link Bid#bidEvalImpl(Model, ConnectionWrapper)} which is overridden by all subclasses and
+ * contains the actual implementation of bid evaluation.
+ * &lt;/p&gt;
+ */
+public abstract class Bid {
+
+    protected final Player player;
+    protected final int slot;
+
+<span class="nc" id="L26">    protected Bid(final Player player, final int slot) {</span>
+<span class="nc" id="L27">        this.slot = slot;</span>
+<span class="nc" id="L28">        this.player = player;</span>
+<span class="nc" id="L29">    }</span>
+
+    /**
+     * Evaluate a bid.
+     * &lt;p&gt;
+     * This method implements some general checks, e.g., player is still alive.
+     * If the checks succeed, this method calls {@link Bid#bidEvalImpl(Model, ConnectionWrapper)}.
+     * &lt;/p&gt;
+     *
+     * @param model      the model to which the action based changes should apply
+     * @param connection the connection to the client to transmit events
+     * @return a result that indicates how the game should continue
+     */
+    public final ActionResult evaluate(final Model model, final ConnectionWrapper connection) {
+<span class="nc bnc" id="L43" title="All 2 branches missed.">        if (this.player.isAlive()) {</span>
+<span class="nc" id="L44">            return bidEvalImpl(model, connection);</span>
+        }
+<span class="nc" id="L46">        return ActionResult.PROCEED;</span>
+    }
+
+    /**
+     * This function contains the implementation of the bid's evaluation functionality and is called
+     * when a bid is being evaluated.
+     *
+     * @param model      the model to which the action based changes should apply
+     * @param connection the connection to the client to transmit events
+     * @return a result that indicates how the game should continue
+     */
+    protected abstract ActionResult bidEvalImpl(Model model, ConnectionWrapper connection);
+
+    /**
+     * Factory function for bids.
+     *
+     * @param type   the type of bid to create
+     * @param player the player creating the bid
+     * @param slot   the slot of the bid on the bidding square
+     * @return the created bid
+     */
+    public static Bid createBid(final BidType type, final Player player, final int slot) {
+<span class="nc bnc" id="L68" title="All 9 branches missed.">        return switch (type) {</span>
+<span class="nc" id="L69">            case FOOD -&gt; new FoodBid(player, slot);</span>
+<span class="nc" id="L70">            case GOLD -&gt; new GoldBid(player, slot);</span>
+<span class="nc" id="L71">            case IMPS -&gt; new ImpsBid(player, slot);</span>
+<span class="nc" id="L72">            case MONSTER -&gt; new MonsterBid(player, slot);</span>
+<span class="nc" id="L73">            case NICENESS -&gt; new NicenessBid(player, slot);</span>
+<span class="nc" id="L74">            case ROOM -&gt; new RoomBid(player, slot);</span>
+<span class="nc" id="L75">            case TRAP -&gt; new TrapBid(player, slot);</span>
+<span class="nc" id="L76">            case TUNNEL -&gt; new TunnelBid(player, slot);</span>
+        };
+    }
+
+    public int getSlot() {
+<span class="nc" id="L81">        return slot;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

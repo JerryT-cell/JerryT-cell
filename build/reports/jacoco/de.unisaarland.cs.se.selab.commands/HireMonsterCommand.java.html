@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HireMonsterCommand.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.commands</a> &gt; <span class="el_source">HireMonsterCommand.java</span></div><h1>HireMonsterCommand.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.commands;
+
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Monster;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.state.State;
+import java.util.Optional;
+import java.util.Set;
+
+/**
+ * A player hires a monster.
+ */
+public class HireMonsterCommand extends PlayerCommand {
+
+    private final int monsterId;
+
+    public HireMonsterCommand(final int playerId, final int monsterId) {
+<span class="nc" id="L19">        super(playerId);</span>
+<span class="nc" id="L20">        this.monsterId = monsterId;</span>
+<span class="nc" id="L21">    }</span>
+
+    @Override
+    public Set&lt;State.Phase&gt; inPhase() {
+<span class="nc" id="L25">        return Set.of(State.Phase.HIRING_MONSTER);</span>
+    }
+
+    @Override
+    public ActionResult run(final Model model, final ConnectionWrapper connection) {
+<span class="nc" id="L30">        final Player player = model.getPlayerById(getId());</span>
+<span class="nc" id="L31">        final Optional&lt;Monster&gt; optMonster = model.getAvailableMonster(this.monsterId);</span>
+
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        if (optMonster.isPresent()) {</span>
+<span class="nc" id="L34">            final Monster monster = optMonster.get();</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">            if (player.getFood() &gt;= monster.getHunger()</span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">                    &amp;&amp; player.getEvilness() + monster.getEvilness() &lt;= Player.MAX_EVILNESS) {</span>
+<span class="nc" id="L37">                player.changeFood(-monster.getHunger());</span>
+<span class="nc" id="L38">                player.changeEvilness(monster.getEvilness());</span>
+<span class="nc" id="L39">                player.addMonster(monster);</span>
+<span class="nc" id="L40">                model.removeAvailableMonster(monster);</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">                if (monster.getHunger() &gt; 0) {</span>
+<span class="nc" id="L42">                    connection.sendFoodChanged(getId(), -monster.getHunger());</span>
+                }
+<span class="nc bnc" id="L44" title="All 2 branches missed.">                if (monster.getEvilness() &gt; 0) {</span>
+<span class="nc" id="L45">                    connection.sendEvilnessChanged(getId(), monster.getEvilness());</span>
+                }
+<span class="nc" id="L47">                connection.sendMonsterHired(getId(), this.monsterId);</span>
+<span class="nc" id="L48">                return ActionResult.PROCEED;</span>
+            } else {
+<span class="nc" id="L50">                connection.sendActionFailed(getId(), &quot;You cannot feed this monster.&quot;);</span>
+            }
+<span class="nc" id="L52">        } else {</span>
+<span class="nc" id="L53">            connection.sendActionFailed(getId(), &quot;This monster is not available to hire.&quot;);</span>
+        }
+<span class="nc" id="L55">        return ActionResult.RETRY;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

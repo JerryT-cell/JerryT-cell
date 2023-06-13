@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DefensiveMeasure.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.model</a> &gt; <span class="el_source">DefensiveMeasure.java</span></div><h1>DefensiveMeasure.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.model;
+
+/**
+ * Superclass for everything that can be placed as a defense.
+ */
+public abstract class DefensiveMeasure {
+
+    private final int id;
+    private final int damage;
+    private final AttackStrategy attackStrategy;
+    private int target;
+
+    protected DefensiveMeasure(final int id, final int damage,
+<span class="fc" id="L14">                               final AttackStrategy attackStrategy) {</span>
+<span class="fc" id="L15">        this.id = id;</span>
+<span class="fc" id="L16">        this.damage = damage;</span>
+<span class="fc" id="L17">        this.attackStrategy = attackStrategy;</span>
+        // no target is set by default
+<span class="fc" id="L19">        this.target = 0;</span>
+<span class="fc" id="L20">    }</span>
+
+    public int getId() {
+<span class="nc" id="L23">        return id;</span>
+    }
+
+    public int getDamage() {
+<span class="nc" id="L27">        return damage;</span>
+    }
+
+    public AttackStrategy getAttackStrategy() {
+<span class="nc" id="L31">        return attackStrategy;</span>
+    }
+
+    public boolean hasTarget() {
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        return this.target &gt; 0;</span>
+    }
+
+    public int getTarget() {
+<span class="nc" id="L39">        return target;</span>
+    }
+
+    public void setTarget(final int target) {
+<span class="fc" id="L43">        this.target = target;</span>
+<span class="fc" id="L44">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CastCounterSpellCommand.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">2022Reference</a> &gt; <a href="index.source.html" class="el_package">de.unisaarland.cs.se.selab.commands</a> &gt; <span class="el_source">CastCounterSpellCommand.java</span></div><h1>CastCounterSpellCommand.java</h1><pre class="source lang-java linenums">package de.unisaarland.cs.se.selab.commands;
+
+import de.unisaarland.cs.se.selab.ConnectionWrapper;
+import de.unisaarland.cs.se.selab.model.Model;
+import de.unisaarland.cs.se.selab.model.Player;
+import de.unisaarland.cs.se.selab.state.State;
+import java.util.Set;
+
+public class CastCounterSpellCommand extends PlayerCommand {
+    public CastCounterSpellCommand(final int playerId) {
+<span class="nc" id="L11">        super(playerId);</span>
+<span class="nc" id="L12">    }</span>
+
+    @Override
+    protected ActionResult run(final Model model, final ConnectionWrapper connection) {
+<span class="nc" id="L16">        final Player player = model.getPlayerById(getId());</span>
+<span class="nc bnc" id="L17" title="All 2 branches missed.">        if (player.getCounterSpells() &gt; 0) {</span>
+<span class="nc" id="L18">            player.useCounterSpell();</span>
+<span class="nc" id="L19">            connection.sendCounterSpellCast(player.getId());</span>
+<span class="nc" id="L20">            return ActionResult.PROCEED;</span>
+        } else {
+<span class="nc" id="L22">            connection.sendActionFailed(player.getId(), &quot;player don't have counter spells&quot;);</span>
+<span class="nc" id="L23">            return ActionResult.RETRY;</span>
+        }
+    }
+
+    @Override
+    public Set&lt;State.Phase&gt; inPhase() {
+<span class="nc" id="L29">        return Set.of(State.Phase.SPELL);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
